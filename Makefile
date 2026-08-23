@@ -4,7 +4,7 @@ VITA_CC := arm-vita-eabi-gcc
 
 VITA_TITLE := Portalban
 VITA_APP_VER := 01.00
-VITA_TITLEID := IVOA00007
+VITA_TITLEID := IVOAH0001
 
 LIBS := sdl3
 
