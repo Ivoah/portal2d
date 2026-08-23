@@ -1,8 +1,12 @@
+#pragma once
+
 #include <SDL3/SDL.h>
 #include "Vec2.h"
 
-#define TILE_SIZE 32
-#define MAX_CUBES 32
+#define L_TILE_SIZE 32
+#define L_MAX_WIDTH 32
+#define L_MAX_HEIGHT 32
+#define L_MAX_CUBES 32
 
 typedef struct {
     bool exists;
@@ -13,7 +17,7 @@ typedef struct {
 typedef struct LevelState {
     int moves;
     Vec2 playerLocation;
-    Vec2 cubes[MAX_CUBES];
+    Vec2 cubes[L_MAX_CUBES];
     Portal orangePortal;
     Portal bluePortal;
     bool lastShotBlue;
@@ -22,19 +26,18 @@ typedef struct LevelState {
 
 typedef struct {
     int levelNum;
-    int tiles[32][32];
+    int tiles[L_MAX_HEIGHT][L_MAX_WIDTH];
     int width;
     int height;
     int numCubes;
     LevelState* state;
 } Level;
 
-bool Level_loadTextures(SDL_Renderer*);
-void Level_unloadTextures();
+bool Level_init(SDL_Renderer*);
+void Level_deinit();
 Level* Level_load(int);
 void Level_free(Level*);
 void Level_draw(SDL_Renderer*, Level*, Vec2);
-void Level_drawNumber(SDL_Renderer*, int, int, Vec2);
 void Level_move(Level*, Vec2);
 void Level_shoot(Level*, Vec2);
 void Level_undo(Level*, int);

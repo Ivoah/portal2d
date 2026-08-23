@@ -3,6 +3,7 @@
 #include <SDL3/SDL_main.h>
 
 #include "Level.h"
+#include "Text.h"
 
 static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
@@ -28,7 +29,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
     SDL_SetRenderLogicalPresentation(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     if (!SDL_SetRenderVSync(renderer, 1)) SDL_Log("Could not set vsync: %s", SDL_GetError());
 
-    if (!Level_loadTextures(renderer)) return SDL_APP_FAILURE;
+    if (!Text_init(renderer)) return SDL_APP_FAILURE;
+    if (!Level_init(renderer)) return SDL_APP_FAILURE;
 
     currentLevel = Level_load(0);
     if (currentLevel == NULL) return SDL_APP_FAILURE;
@@ -117,7 +119,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     SDL_RenderClear(renderer);
 
     // Draw level
-    const Vec2 center = {WINDOW_WIDTH/2 - currentLevel->width*TILE_SIZE/2, WINDOW_HEIGHT/2 - currentLevel->height*TILE_SIZE/2};
+    const Vec2 center = {WINDOW_WIDTH/2 - currentLevel->width*L_TILE_SIZE/2, WINDOW_HEIGHT/2 - currentLevel->height*L_TILE_SIZE/2};
     Level_draw(renderer, currentLevel, center);
 
     SDL_RenderPresent(renderer);
@@ -137,6 +139,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
 void SDL_AppQuit(void* appstate, SDL_AppResult result) {
     if (currentLevel != NULL) Level_free(currentLevel);
     if (gamepad != NULL) SDL_CloseGamepad(gamepad);
-    Level_unloadTextures();
+    Level_deinit();
+    Text_deinit();
     /* SDL will clean up the window/renderer for us. */
 }

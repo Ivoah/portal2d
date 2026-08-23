@@ -1,75 +1,46 @@
 #include "Level.h"
+#include "Util.h"
+#include "Text.h"
 
 const char* Level_texturePaths[] = {
     NULL,
 #define L_BUTTON 1
-    "sprites/button.png",
+    "button.png",
 #define L_CUBE   2
-    "sprites/cube.png",
+    "cube.png",
 #define L_PLAYER 3
-    "sprites/bendy.png",
+    "bendy.png",
 #define L_FLOOR  4
-    "sprites/floor.png",
+    "floor.png",
 #define L_PWALL  5
-    "sprites/pwall.png",
+    "pwall.png",
 #define L_NPWALL 6
-    "sprites/npwall.png",
+    "npwall.png",
 #define L_ORANGEPORTAL 7
-    "sprites/orangePortal.png",
+    "orangePortal.png",
 #define L_BLUEPORTAL 8
-    "sprites/bluePortal.png",
+    "bluePortal.png",
 #define L_LEVEL 9
-    "sprites/level.png",
+    "level.png",
 #define L_MOVES 10
-    "sprites/moves.png"
+    "moves.png"
 };
-#define NUM_TX    11
+#define L_NUM_TX    11
 
-static SDL_Texture* Level_textures[NUM_TX];
-static SDL_Texture* Level_numbersTexture = NULL;
+static SDL_Texture* Level_textures[L_NUM_TX];
 
-SDL_Texture* Level_loadTexture(SDL_Renderer* renderer, const char* path) {
-    char* pngPath = NULL;
-    SDL_Surface* surface = NULL;
-    SDL_Texture* texture = NULL;
-
-    SDL_asprintf(&pngPath, "%s%s", SDL_GetBasePath(), path);
-    surface = SDL_LoadPNG(pngPath);
-    SDL_free(pngPath);
-
-    if (!surface) {
-        SDL_Log("Couldn't load png: %s", SDL_GetError());
-        return NULL;
-    }
-    
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (!texture) {
-        SDL_Log("Couldn't create static texture: %s", SDL_GetError());
-        return NULL;
-    }
-
-    SDL_DestroySurface(surface);
-
-    return texture;
-}
-
-bool Level_loadTextures(SDL_Renderer* renderer) {
+bool Level_init(SDL_Renderer* renderer) {
     // Skip first entry in texture_paths
-    for (int i = 1; i < NUM_TX; i++) {
-        Level_textures[i] = Level_loadTexture(renderer, Level_texturePaths[i]);
+    for (int i = 1; i < L_NUM_TX; i++) {
+        Level_textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
         if (Level_textures[i] == NULL) return false;
     }
-
-    Level_numbersTexture = Level_loadTexture(renderer, "sprites/numbers.png");
-    if (Level_numbersTexture == NULL) return false;
 
     return true;
 }
 
-void Level_unloadTextures() {
-    for (int i = 0; i < NUM_TX; i++)
-        if (Level_textures[i] != NULL) SDL_DestroyTexture(Level_textures[i]);
-    if (Level_numbersTexture != NULL) SDL_DestroyTexture(Level_numbersTexture);
+void Level_deinit() {
+    for (int i = 0; i < L_NUM_TX; i++) if (Level_textures[i] != NULL) SDL_DestroyTexture(Level_textures[i]);
 }
 
 Level* Level_load(int num) {
@@ -88,12 +59,15 @@ Level* Level_load(int num) {
 
     int x = 0, y = 0;
     for (int i = 0; mapData[i] != 0; i++) {
+        if (x >= L_MAX_WIDTH || y >= L_MAX_HEIGHT) {
+            SDL_Log("Level too large, max width/height is %dx%d", L_MAX_WIDTH, L_MAX_HEIGHT);
+        }
         switch (mapData[i]) {
             case '?':
                 newLevel->tiles[y][x] = L_BUTTON;
                 break;
             case 'c':
-                if (newLevel->numCubes >= MAX_CUBES) {
+                if (newLevel->numCubes >= L_MAX_CUBES) {
                     SDL_Log("too many cubes!");
                     Level_free(newLevel);
                     SDL_free(mapData);
@@ -151,29 +125,17 @@ void Level_free(Level* level) {
     SDL_free(level);
 }
 
-void Level_drawNumber(SDL_Renderer* renderer, int num, int minDigits, Vec2 pos) {
-    SDL_FRect src_rect = {0, TILE_SIZE*((SDL_GetTicks()/500)%(Level_numbersTexture->h/TILE_SIZE)), TILE_SIZE, TILE_SIZE};
-    SDL_FRect dst_rect = {0, pos.y, TILE_SIZE, TILE_SIZE};
-
-    int digits = SDL_max(minDigits, SDL_log10(num) + 1);
-    for (int d = 0; d < digits; d++) {
-        dst_rect.x = pos.x + (digits - (d + 1))*TILE_SIZE;
-        src_rect.x = (num/(int)SDL_pow(10, d)%10)*TILE_SIZE;
-        SDL_RenderTexture(renderer, Level_numbersTexture, &src_rect, &dst_rect);
-    }
-}
-
 void Level_draw(SDL_Renderer* renderer, Level* level, Vec2 offset) {
-    SDL_FRect src_rect = {0, 0, TILE_SIZE, TILE_SIZE};
-    SDL_FRect dst_rect = {0, 0, TILE_SIZE, TILE_SIZE};
+    SDL_FRect src_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
+    SDL_FRect dst_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
 
     // Draw map
     for (int i = 0; i < level->height; i++) {
         for (int j = 0; j < level->width; j++) {
             int tile = level->tiles[i][j];
             if (tile > 0) {
-                dst_rect.x = j*TILE_SIZE + offset.x;
-                dst_rect.y = i*TILE_SIZE + offset.y;
+                dst_rect.x = j*L_TILE_SIZE + offset.x;
+                dst_rect.y = i*L_TILE_SIZE + offset.y;
                 SDL_RenderTexture(renderer, Level_textures[tile], NULL, &dst_rect);
             }
         }
@@ -181,44 +143,46 @@ void Level_draw(SDL_Renderer* renderer, Level* level, Vec2 offset) {
 
     // Draw cubes
     for (int i = 0; i < level->numCubes; i++) {
-        dst_rect.x = level->state->cubes[i].x*TILE_SIZE + offset.x;
-        dst_rect.y = level->state->cubes[i].y*TILE_SIZE + offset.y;
+        dst_rect.x = level->state->cubes[i].x*L_TILE_SIZE + offset.x;
+        dst_rect.y = level->state->cubes[i].y*L_TILE_SIZE + offset.y;
         SDL_RenderTexture(renderer, Level_textures[L_CUBE], NULL, &dst_rect);
     }
 
     // Draw portals
-    src_rect.x = (SDL_GetTicks()/100)%TILE_SIZE;
+    src_rect.x = (SDL_GetTicks()/100)%L_TILE_SIZE;
     if (level->state->bluePortal.exists) {
-        dst_rect.x = level->state->bluePortal.pos.x*TILE_SIZE + offset.x;
-        dst_rect.y = level->state->bluePortal.pos.y*TILE_SIZE + offset.y;
+        dst_rect.x = level->state->bluePortal.pos.x*L_TILE_SIZE + offset.x;
+        dst_rect.y = level->state->bluePortal.pos.y*L_TILE_SIZE + offset.y;
         SDL_RenderTextureRotated(renderer, Level_textures[L_BLUEPORTAL], &src_rect, &dst_rect, level->state->bluePortal.r*90, NULL, SDL_FLIP_NONE);
     }
     if (level->state->orangePortal.exists) {
-        dst_rect.x = level->state->orangePortal.pos.x*TILE_SIZE + offset.x;
-        dst_rect.y = level->state->orangePortal.pos.y*TILE_SIZE + offset.y;
+        dst_rect.x = level->state->orangePortal.pos.x*L_TILE_SIZE + offset.x;
+        dst_rect.y = level->state->orangePortal.pos.y*L_TILE_SIZE + offset.y;
         SDL_RenderTextureRotated(renderer, Level_textures[L_ORANGEPORTAL], &src_rect, &dst_rect, level->state->orangePortal.r*90, NULL, SDL_FLIP_NONE);
     }
 
     // Draw player
-    dst_rect.x = level->state->playerLocation.x*TILE_SIZE + offset.x;
-    dst_rect.y = level->state->playerLocation.y*TILE_SIZE + offset.y;
+    dst_rect.x = level->state->playerLocation.x*L_TILE_SIZE + offset.x;
+    dst_rect.y = level->state->playerLocation.y*L_TILE_SIZE + offset.y;
     SDL_RenderTexture(renderer, Level_textures[L_PLAYER], NULL, &dst_rect);
 
     // Draw level number
-    src_rect = (SDL_FRect){0, TILE_SIZE*((SDL_GetTicks()/500)%(Level_textures[L_LEVEL]->h/TILE_SIZE)), Level_textures[L_LEVEL]->w, TILE_SIZE};
-    dst_rect.x = 0;
-    dst_rect.y = 0;
-    dst_rect.w = Level_textures[L_LEVEL]->w;
-    SDL_RenderTexture(renderer, Level_textures[L_LEVEL], &src_rect, &dst_rect);
-    Level_drawNumber(renderer, level->levelNum, 2, (Vec2){Level_textures[L_LEVEL]->w, 0});
+    // src_rect = (SDL_FRect){0, L_TILE_SIZE*((SDL_GetTicks()/500)%(Level_textures[L_LEVEL]->h/L_TILE_SIZE)), Level_textures[L_LEVEL]->w, L_TILE_SIZE};
+    // dst_rect.x = 0;
+    // dst_rect.y = 0;
+    // dst_rect.w = Level_textures[L_LEVEL]->w;
+    // SDL_RenderTexture(renderer, Level_textures[L_LEVEL], &src_rect, &dst_rect);
+    Text_draw(renderer, T_LEVEL, (Vec2){0, 0});
+    Text_drawNumber(renderer, level->levelNum, 2, -1, (Vec2){Level_textures[L_LEVEL]->w, 0});
 
     // Draw move counter
-    src_rect = (SDL_FRect){0, TILE_SIZE*((SDL_GetTicks()/500)%(Level_textures[L_MOVES]->h/TILE_SIZE)), Level_textures[L_MOVES]->w, TILE_SIZE};
-    dst_rect.x = 0;
-    dst_rect.y = TILE_SIZE;
-    dst_rect.w = Level_textures[L_MOVES]->w;
-    SDL_RenderTexture(renderer, Level_textures[L_MOVES], &src_rect, &dst_rect);
-    Level_drawNumber(renderer, level->state->moves, 2, (Vec2){Level_textures[L_MOVES]->w, TILE_SIZE});
+    // src_rect = (SDL_FRect){0, L_TILE_SIZE*((SDL_GetTicks()/500)%(Level_textures[L_MOVES]->h/L_TILE_SIZE)), Level_textures[L_MOVES]->w, L_TILE_SIZE};
+    // dst_rect.x = 0;
+    // dst_rect.y = L_TILE_SIZE;
+    // dst_rect.w = Level_textures[L_MOVES]->w;
+    // SDL_RenderTexture(renderer, Level_textures[L_MOVES], &src_rect, &dst_rect);
+    Text_draw(renderer, T_MOVES, (Vec2){0, T_TEXT_HEIGHT});
+    Text_drawNumber(renderer, level->state->moves, 2, -1, (Vec2){Level_textures[L_MOVES]->w, L_TILE_SIZE});
 }
 
 void Level_newState(Level* level) {
