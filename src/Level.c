@@ -166,22 +166,10 @@ void Level_draw(SDL_Renderer* renderer, Level* level, Vec2 offset) {
     dst_rect.y = level->state->playerLocation.y*L_TILE_SIZE + offset.y;
     SDL_RenderTexture(renderer, Level_textures[L_PLAYER], NULL, &dst_rect);
 
-    // Draw level number
-    // src_rect = (SDL_FRect){0, L_TILE_SIZE*((SDL_GetTicks()/500)%(Level_textures[L_LEVEL]->h/L_TILE_SIZE)), Level_textures[L_LEVEL]->w, L_TILE_SIZE};
-    // dst_rect.x = 0;
-    // dst_rect.y = 0;
-    // dst_rect.w = Level_textures[L_LEVEL]->w;
-    // SDL_RenderTexture(renderer, Level_textures[L_LEVEL], &src_rect, &dst_rect);
     Text_draw(renderer, T_LEVEL, (Vec2){0, 0});
     Text_drawNumber(renderer, level->levelNum, 2, -1, (Vec2){Level_textures[L_LEVEL]->w, 0});
 
-    // Draw move counter
-    // src_rect = (SDL_FRect){0, L_TILE_SIZE*((SDL_GetTicks()/500)%(Level_textures[L_MOVES]->h/L_TILE_SIZE)), Level_textures[L_MOVES]->w, L_TILE_SIZE};
-    // dst_rect.x = 0;
-    // dst_rect.y = L_TILE_SIZE;
-    // dst_rect.w = Level_textures[L_MOVES]->w;
-    // SDL_RenderTexture(renderer, Level_textures[L_MOVES], &src_rect, &dst_rect);
-    Text_draw(renderer, T_MOVES, (Vec2){0, T_TEXT_HEIGHT});
+    Text_draw(renderer, T_MOVES, (Vec2){0, Text_getHeight(T_LEVEL)});
     Text_drawNumber(renderer, level->state->moves, 2, -1, (Vec2){Level_textures[L_MOVES]->w, L_TILE_SIZE});
 }
 

@@ -16,4 +16,5 @@ typedef enum {
 bool Text_init(SDL_Renderer*);
 void Text_deinit(); 
 void Text_draw(SDL_Renderer*, Text_TxId, Vec2);
+int Text_getHeight(Text_TxId);
 void Text_drawNumber(SDL_Renderer*, int, int, int, Vec2);

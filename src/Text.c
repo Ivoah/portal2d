@@ -30,11 +30,16 @@ void Text_deinit() {
 
 void Text_draw(SDL_Renderer* renderer, Text_TxId id, Vec2 pos) {
     SDL_Texture* tx = Text_textures[id];
+    int height = tx->h/2;
 
-    SDL_FRect src_rect = {0, T_TEXT_HEIGHT*((SDL_GetTicks()/T_WOBBLE_SPEED)%(tx->h/T_TEXT_HEIGHT)), tx->w, T_TEXT_HEIGHT};
-    SDL_FRect dst_rect = {pos.x, pos.y, tx->w, T_TEXT_HEIGHT};
+    SDL_FRect src_rect = {0, height*((SDL_GetTicks()/T_WOBBLE_SPEED)%(tx->h/height)), tx->w, height};
+    SDL_FRect dst_rect = {pos.x, pos.y, tx->w, height};
 
     SDL_RenderTexture(renderer, tx, &src_rect, &dst_rect);
+}
+
+int Text_getHeight(Text_TxId id) {
+    return Text_textures[id]->h/2;
 }
 
 void Text_drawNumber(SDL_Renderer* renderer, int num, int minDigits, int maxDigits, Vec2 pos) {
