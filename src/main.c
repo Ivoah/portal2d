@@ -5,16 +5,20 @@
 #include "Level.h"
 #include "Text.h"
 
-static SDL_Window* window = NULL;
-static SDL_Renderer* renderer = NULL;
-
 #define WINDOW_WIDTH 960
 #define WINDOW_HEIGHT 544
 
-static Level* currentLevel = NULL;
-static SDL_Gamepad* gamepad = NULL;
+typedef struct {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    Level* currentLevel;
+    SDL_Gamepad* gamepad;
+} GameState;
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
+    *appstate = SDL_calloc(1, sizeof(GameState));
+    GameState* state = (GameState*)(*appstate);
+
     SDL_SetAppMetadata("Portalban", "0.1", "net.ivoah.portalban");
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
@@ -22,23 +26,25 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("Portalban", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("Portalban", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &state->window, &state->renderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-    SDL_SetRenderLogicalPresentation(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
-    if (!SDL_SetRenderVSync(renderer, 1)) SDL_Log("Could not set vsync: %s", SDL_GetError());
+    SDL_SetRenderLogicalPresentation(state->renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    if (!SDL_SetRenderVSync(state->renderer, 1)) SDL_Log("Could not set vsync: %s", SDL_GetError());
 
-    if (!Text_init(renderer)) return SDL_APP_FAILURE;
-    if (!Level_init(renderer)) return SDL_APP_FAILURE;
+    if (!Text_init(state->renderer)) return SDL_APP_FAILURE;
+    if (!Level_init(state->renderer)) return SDL_APP_FAILURE;
 
-    currentLevel = Level_load(0);
-    if (currentLevel == NULL) return SDL_APP_FAILURE;
+    state->currentLevel = Level_load(0);
+    if (state->currentLevel == NULL) return SDL_APP_FAILURE;
 
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
+    GameState* state = (GameState*)appstate;
+
     int levelToLoad = -1;
     Vec2* moveDir = NULL;
     Vec2* shotDir = NULL;
@@ -64,10 +70,10 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
                 default: break;
             }
             switch (event->key.key) {
-                case SDLK_R: Level_undo(currentLevel, -1); break;
-                case SDLK_COMMA: levelToLoad = currentLevel->levelNum - 1; break;
-                case SDLK_PERIOD: levelToLoad = currentLevel->levelNum + 1; break;
-                case SDLK_U: Level_undo(currentLevel, 1); break;
+                case SDLK_R: Level_undo(state->currentLevel, -1); break;
+                case SDLK_COMMA: levelToLoad = state->currentLevel->levelNum - 1; break;
+                case SDLK_PERIOD: levelToLoad = state->currentLevel->levelNum + 1; break;
+                case SDLK_U: Level_undo(state->currentLevel, 1); break;
                 default: break;
             }
             break;
@@ -81,55 +87,57 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
                 case SDL_GAMEPAD_BUTTON_SOUTH: shotDir = &V_DOWN; break;
                 case SDL_GAMEPAD_BUTTON_WEST:  shotDir = &V_LEFT; break;
                 case SDL_GAMEPAD_BUTTON_EAST:  shotDir = &V_RIGHT; break;
-                case SDL_GAMEPAD_BUTTON_BACK:  Level_undo(currentLevel, 1); break;
-                case SDL_GAMEPAD_BUTTON_START: Level_undo(currentLevel, -1); break;
+                case SDL_GAMEPAD_BUTTON_BACK:  Level_undo(state->currentLevel, 1); break;
+                case SDL_GAMEPAD_BUTTON_START: Level_undo(state->currentLevel, -1); break;
                 default: break;
             }
             break;
         case SDL_EVENT_GAMEPAD_ADDED:
             SDL_Log("Gamepad added: %d", event->gdevice.which);
-            if (gamepad == NULL) gamepad = SDL_OpenGamepad(event->gbutton.which);
+            if (state->gamepad == NULL) state->gamepad = SDL_OpenGamepad(event->gbutton.which);
             break;
     }
 
-    if (moveDir != NULL) Level_move(currentLevel, *moveDir);
-    if (shotDir != NULL) Level_shoot(currentLevel, *shotDir);
+    if (moveDir != NULL) Level_move(state->currentLevel, *moveDir);
+    if (shotDir != NULL) Level_shoot(state->currentLevel, *shotDir);
 
     if (levelToLoad != -1) {
         levelToLoad = levelToLoad%10;
-        Level_free(currentLevel);
-        currentLevel = Level_load(levelToLoad);
-        if (currentLevel == NULL) return SDL_APP_SUCCESS;
+        Level_free(state->currentLevel);
+        state->currentLevel = Level_load(levelToLoad);
+        if (state->currentLevel == NULL) return SDL_APP_SUCCESS;
     }
 
-    if (currentLevel->state->lastShotBlue) SDL_SetGamepadLED(gamepad, 0, 0, 255);
-    else                                   SDL_SetGamepadLED(gamepad, 255, 35, 0);
+    if (state->currentLevel->state->lastShotBlue) SDL_SetGamepadLED(state->gamepad, 0, 0, 255);
+    else                                          SDL_SetGamepadLED(state->gamepad, 255, 35, 0);
 
     return SDL_APP_CONTINUE;
 }
 
 Uint64 lastTime = 0, currentTime = 0;
 SDL_AppResult SDL_AppIterate(void* appstate) {
+    GameState* state = (GameState*)appstate;
+
     currentTime = SDL_GetTicks();
     Uint64 delta = currentTime - lastTime;
     lastTime = currentTime;
 
     // Clear screen
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(state->renderer);
 
     // Draw level
-    const Vec2 center = {WINDOW_WIDTH/2 - currentLevel->width*L_TILE_SIZE/2, WINDOW_HEIGHT/2 - currentLevel->height*L_TILE_SIZE/2};
-    Level_draw(renderer, currentLevel, center);
+    const Vec2 center = {WINDOW_WIDTH/2 - state->currentLevel->width*L_TILE_SIZE/2, WINDOW_HEIGHT/2 - state->currentLevel->height*L_TILE_SIZE/2};
+    Level_draw(state->renderer, state->currentLevel, center);
 
-    SDL_RenderPresent(renderer);
+    SDL_RenderPresent(state->renderer);
 
     // Advance level if won
-    if (Level_isWon(currentLevel)) {
-        int nextLevel = currentLevel->levelNum + 1;
-        Level_free(currentLevel);
-        currentLevel = Level_load(nextLevel);
-        if (currentLevel == NULL) return SDL_APP_SUCCESS;
+    if (Level_isWon(state->currentLevel)) {
+        int nextLevel = state->currentLevel->levelNum + 1;
+        Level_free(state->currentLevel);
+        state->currentLevel = Level_load(nextLevel);
+        if (state->currentLevel == NULL) return SDL_APP_SUCCESS;
     } 
 
     return SDL_APP_CONTINUE;
@@ -137,8 +145,11 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
 
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void* appstate, SDL_AppResult result) {
-    if (currentLevel != NULL) Level_free(currentLevel);
-    if (gamepad != NULL) SDL_CloseGamepad(gamepad);
+    GameState* state = (GameState*)appstate;
+
+    if (state->currentLevel != NULL) Level_free(state->currentLevel);
+    if (state->gamepad != NULL) SDL_CloseGamepad(state->gamepad);
+    SDL_free(state);
     Level_deinit();
     Text_deinit();
     /* SDL will clean up the window/renderer for us. */
