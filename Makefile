@@ -1,6 +1,8 @@
 .PHONY: all pc vita clean
+.SECONDARY:
 
 VITA_CC := arm-vita-eabi-gcc
+WEB_CC := emcc
 
 VITA_TITLE := Portalban
 VITA_APP_VER := 01.00
@@ -13,21 +15,31 @@ CFLAGS += $(shell pkg-config --cflags $(LIBS)) -g -fsanitize=address -fno-omit-f
 LDFLAGS += $(shell pkg-config --libs $(LIBS)) -g -fsanitize=address -fno-omit-frame-pointer
 VITA_CFLAGS += -Wl,-q -std=gnu17 $(shell arm-vita-eabi-pkg-config --cflags $(LIBS))
 VITA_LDFLAGS += -Wl,-q -std=gnu17 -Wl,-z,nocopyreloc $(shell arm-vita-eabi-pkg-config --libs $(LIBS))
+WEB_CFLAGS += --use-port=sdl3
+WEB_LDFLAGS += --use-port=sdl3
 
 SOURCES := $(wildcard src/*.c)
 
 OBJS := $(addprefix pc_build/, $(SOURCES:src/%.c=%.o))
 VITA_OBJS := $(addprefix vita_build/, $(SOURCES:src/%.c=%.o)) $(VITASDK)/arm-vita-eabi/lib/libSDL3.a
+WEB_OBJS := $(addprefix web_build/, $(SOURCES:src/%.c=%.o))
 
-all: pc vita
+all: pc vita web
 pc: $(EXE)
 vita: $(EXE).vpk
+web: $(EXE).html
 
 $(EXE): $(OBJS)
 	$(CC) $^ $(LDFLAGS) -o $@
 
 pc_build/%.o: src/%.c | pc_build
 	$(CC) -c $(CFLAGS) -o $@ $<
+
+$(EXE).html $(EXE).js $(EXE).wasm $(EXE).data: $(WEB_OBJS)
+	$(WEB_CC) $^ $(WEB_LDFLAGS) -o $@ --preload-file levels --preload-file sprites
+
+web_build/%.o: src/%.c | web_build
+	$(WEB_CC) -c $(WEB_CFLAGS) -o $@ $<
 
 $(EXE).vpk: vita_build/$(EXE).self vita_build/param.sfo sce_sys levels sprites
 	vita-pack-vpk -s vita_build/param.sfo -b vita_build/$(EXE).self \
@@ -61,4 +73,4 @@ vita_build/%.o : src/%.c | vita_build
 	$(VITA_CC) -c $(VITA_CFLAGS) -o $@ $<
 
 clean:
-	rm -rf $(EXE) $(EXE).vpk *_build
+	rm -rf $(EXE) $(EXE).vpk $(EXE).html $(EXE).js $(EXE).wasm $(EXE).data *_build
