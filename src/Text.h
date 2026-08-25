@@ -3,20 +3,11 @@
 #include <SDL3/SDL.h>
 #include "Vec2.h"
 
-#define T_WOBBLE_SPEED 500
-#define T_TEXT_HEIGHT 32
-
-typedef enum {
-    T_LEVEL = 0,
-    T_MOVES,
-    T_PLAY,
-    T_PORTALBAN,
-    T_NUM_TX
-} Text_TxId;
+#define T_SIZE 32
+#define T_SPACING 8
 
 bool Text_init(SDL_Renderer*);
 void Text_deinit(); 
-void Text_draw(SDL_Renderer*, Text_TxId, Vec2);
-int Text_getWidth(Text_TxId);
-int Text_getHeight(Text_TxId);
-void Text_drawNumber(SDL_Renderer*, int, int, int, Vec2);
+void Text_draw(SDL_Renderer*, const char*, Vec2);
+void Text_drawCentered(SDL_Renderer*, const char*, int);
+int Text_getWidth(const char*);

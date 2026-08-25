@@ -1,61 +1,70 @@
 #include "Text.h"
 #include "Util.h"
+#include "main.h"
 
-const char* Text_texturePaths[] = {
-    "level.png",
-    "moves.png",
-    "play.png",
-    "portalban.png"
-};
+static SDL_Texture* font = NULL;
+static int starts[93];
+static int widths[93];
 
-static SDL_Texture* Text_textures[T_NUM_TX];
-static SDL_Texture* Text_numbersTexture = NULL;
-
-bool Text_init(SDL_Renderer* renderer) {
-    for (int i = 0; i < T_NUM_TX; i++) {
-        Text_textures[i] = Util_loadTexture(renderer, Text_texturePaths[i]);
-        if (Text_textures[i] == NULL) return false;
+void Text_charMetrics(SDL_Surface* surface, int i, int* start, int* width) {
+    // Manually override space character
+    if (i == 0) {
+        *start = 0;
+        *width = T_SPACING;
+        return;
     }
 
-    Text_numbersTexture = Util_loadTexture(renderer, "numbers.png");
-    if (Text_numbersTexture == NULL) return false;
+    *start = T_SIZE;
+    *width = 0;
+    for (int x = 0; x < T_SIZE; x++) {
+        for (int y = 0; y < T_SIZE; y++) {
+            Uint8 r, g, b, a;
+            SDL_ReadSurfacePixel(surface, i*T_SIZE + x, y, &r, &g, &b, &a);
+            if (a > 0) {
+                *start = SDL_min(*start, x);
+                *width = SDL_max(*width, x - *start);
+            }
+        }
+    }
+}
+
+bool Text_init(SDL_Renderer* renderer) {
+    SDL_Surface* fontSurface = Util_loadSurface("font.png");
+    for (int i = 0; i < 93; i++) Text_charMetrics(fontSurface, i, &starts[i], &widths[i]);
+
+    font = SDL_CreateTextureFromSurface(renderer, fontSurface);
+    SDL_DestroySurface(fontSurface);
 
     return true;
 }
 
 void Text_deinit() {
-    for (int i = 0; i < T_NUM_TX; i++)
-        if (Text_textures[i] != NULL) SDL_DestroyTexture(Text_textures[i]);
-    if (Text_numbersTexture != NULL) SDL_DestroyTexture(Text_numbersTexture);
+    if (font != NULL) SDL_DestroyTexture(font);
 }
 
-void Text_draw(SDL_Renderer* renderer, Text_TxId id, Vec2 pos) {
-    SDL_Texture* tx = Text_textures[id];
-    int height = tx->h/2;
+void Text_draw(SDL_Renderer* renderer, const char* str, Vec2 pos) {
+    SDL_FRect src_rect = {0, T_SIZE*((SDL_GetTicks()/U_WOBBLE_SPEED)%(font->h/T_SIZE)), T_SIZE, T_SIZE};
+    SDL_FRect dst_rect = {pos.x, pos.y, T_SIZE, T_SIZE};
 
-    SDL_FRect src_rect = {0, height*((SDL_GetTicks()/T_WOBBLE_SPEED)%(tx->h/height)), tx->w, height};
-    SDL_FRect dst_rect = {pos.x, pos.y, tx->w, height};
-
-    SDL_RenderTexture(renderer, tx, &src_rect, &dst_rect);
-}
-
-int Text_getWidth(Text_TxId id) {
-    return Text_textures[id]->w;
-}
-
-int Text_getHeight(Text_TxId id) {
-    return Text_textures[id]->h/2;
-}
-
-void Text_drawNumber(SDL_Renderer* renderer, int num, int minDigits, int maxDigits, Vec2 pos) {
-    SDL_FRect src_rect = {0, T_TEXT_HEIGHT*((SDL_GetTicks()/T_WOBBLE_SPEED)%(Text_numbersTexture->h/T_TEXT_HEIGHT)), T_TEXT_HEIGHT, T_TEXT_HEIGHT};
-    SDL_FRect dst_rect = {0, pos.y, T_TEXT_HEIGHT, T_TEXT_HEIGHT};
-
-    int numLen = SDL_log10(num) + 1;
-    int digits = SDL_max(minDigits, maxDigits > 0 ? SDL_min(maxDigits, numLen) : numLen);
-    for (int d = 0; d < digits; d++) {
-        dst_rect.x = pos.x + (digits - (d + 1))*T_TEXT_HEIGHT;
-        src_rect.x = (num/(int)SDL_pow(10, d)%10)*T_TEXT_HEIGHT;
-        SDL_RenderTexture(renderer, Text_numbersTexture, &src_rect, &dst_rect);
+    for (const char* c = str; *c != '\0'; c += sizeof(char)) {
+        int i = *c - ' ';
+        // SDL_Log("c: %c, start: %d, width: %d", *c, starts[i], widths[i]);
+        src_rect.x = i*T_SIZE + starts[i];
+        src_rect.w = widths[i];
+        dst_rect.w = widths[i];
+        SDL_RenderTexture(renderer, font, &src_rect, &dst_rect);
+        dst_rect.x += widths[i] + T_SPACING;
     }
+}
+
+void Text_drawCentered(SDL_Renderer* renderer, const char* str, int y) {
+    Text_draw(renderer, str, (Vec2){WINDOW_WIDTH/2 - Text_getWidth(str)/2, y});
+}
+
+int Text_getWidth(const char* str) {
+    int w = 0;
+    for (const char* c = str; *c != '\0'; c += sizeof(char)) {
+        w += widths[*c - ' '] + T_SPACING;
+    }
+    return w - T_SPACING;
 }

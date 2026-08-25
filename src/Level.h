@@ -34,4 +34,4 @@ typedef struct {
     LevelState* state;
 } Level;
 
-Scene Level_scene(SDL_Renderer*);
+Scene Level_scene(SDL_Renderer*, int);

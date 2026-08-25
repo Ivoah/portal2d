@@ -171,11 +171,12 @@ void Level_draw(void* sceneState, SDL_Renderer* renderer) {
     dst_rect.y = level->state->playerLocation.y*L_TILE_SIZE + offset.y;
     SDL_RenderTexture(renderer, textures[L_PLAYER], NULL, &dst_rect);
 
-    Text_draw(renderer, T_LEVEL, (Vec2){0, 0});
-    Text_drawNumber(renderer, level->levelNum, 2, -1, (Vec2){textures[L_LEVEL]->w, 0});
+    char fmtStr[100];
+    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Level: %d", level->levelNum);
+    Text_draw(renderer, fmtStr, (Vec2){0, 0});
 
-    Text_draw(renderer, T_MOVES, (Vec2){0, Text_getHeight(T_LEVEL)});
-    Text_drawNumber(renderer, level->state->moves, 2, -1, (Vec2){textures[L_MOVES]->w, L_TILE_SIZE});
+    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Moves: %d", level->state->moves);
+    Text_draw(renderer, fmtStr, (Vec2){0, T_SIZE});
 }
 
 void Level_newState(Level* level) {
@@ -284,7 +285,7 @@ bool Level_isWon(Level* level) {
 }
 
 SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
-    Level* level = ((LevelSceneState*)sceneState)->level;
+    LevelSceneState* lss = (LevelSceneState*)sceneState;
     int levelToLoad = -1;
     Vec2* moveDir = NULL;
     Vec2* shotDir = NULL;
@@ -308,10 +309,10 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
                 default: break;
             }
             switch (event->key.key) {
-                case SDLK_R:      Level_undo(level, -1); break;
-                case SDLK_COMMA:  levelToLoad = level->levelNum - 1; break;
-                case SDLK_PERIOD: levelToLoad = level->levelNum + 1; break;
-                case SDLK_U:      Level_undo(level, 1); break;
+                case SDLK_R:      Level_undo(lss->level, -1); break;
+                case SDLK_COMMA:  levelToLoad = lss->level->levelNum - 1; break;
+                case SDLK_PERIOD: levelToLoad = lss->level->levelNum + 1; break;
+                case SDLK_U:      Level_undo(lss->level, 1); break;
                 default: break;
             }
             break;
@@ -325,44 +326,44 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
                 case SDL_GAMEPAD_BUTTON_SOUTH:      shotDir = &V_DOWN; break;
                 case SDL_GAMEPAD_BUTTON_WEST:       shotDir = &V_LEFT; break;
                 case SDL_GAMEPAD_BUTTON_EAST:       shotDir = &V_RIGHT; break;
-                case SDL_GAMEPAD_BUTTON_BACK:       Level_undo(level, 1); break;
-                case SDL_GAMEPAD_BUTTON_START:      Level_undo(level, -1); break;
+                case SDL_GAMEPAD_BUTTON_BACK:       Level_undo(lss->level, 1); break;
+                case SDL_GAMEPAD_BUTTON_START:      Level_undo(lss->level, -1); break;
                 default: break;
             }
             break;
     }
 
-    if (moveDir != NULL) Level_move(level, *moveDir);
-    if (shotDir != NULL) Level_shoot(level, *shotDir);
+    if (moveDir != NULL) Level_move(lss->level, *moveDir);
+    if (shotDir != NULL) Level_shoot(lss->level, *shotDir);
 
     // Advance level if won
-    if (Level_isWon(level)) {
-        levelToLoad = level->levelNum + 1;
+    if (Level_isWon(lss->level)) {
+        levelToLoad = lss->level->levelNum + 1;
     }
 
     if (levelToLoad != -1) {
         levelToLoad = levelToLoad%10;
-        Level_free(level);
-        ((LevelSceneState*)sceneState)->level = Level_load(levelToLoad);
-        if (level == NULL) return SDL_APP_SUCCESS;
+        Level_free(lss->level);
+        lss->level = Level_load(levelToLoad);
+        if (lss->level == NULL) return SDL_APP_SUCCESS;
     }
 
-        if (((LevelSceneState*)sceneState)->level->state->lastShotBlue)
-            SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 0, 0, 255);
-        else
-            SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 255, 35, 0);
+    if (lss->level->state->lastShotBlue)
+        SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 0, 0, 255);
+    else
+        SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 255, 35, 0);
 
     return SDL_APP_CONTINUE;
 }
 
-Scene Level_scene(SDL_Renderer* renderer) {
+Scene Level_scene(SDL_Renderer* renderer, int level) {
     LevelSceneState* sceneState = SDL_calloc(1, sizeof(LevelSceneState));
     // Skip first entry in texture_paths
     for (int i = 1; i < L_NUM_TX; i++) {
         sceneState->textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
     }
 
-    sceneState->level = Level_load(0);
+    sceneState->level = Level_load(level);
 
     return (Scene){
         .state = sceneState,
