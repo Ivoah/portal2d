@@ -347,8 +347,10 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
         if (level == NULL) return SDL_APP_SUCCESS;
     }
 
-    // if (level->state->lastShotBlue) SDL_SetGamepadLED(state->gamepad, 0, 0, 255);
-    // else                                          SDL_SetGamepadLED(state->gamepad, 255, 35, 0);
+        if (((LevelSceneState*)sceneState)->level->state->lastShotBlue)
+            SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 0, 0, 255);
+        else
+            SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 255, 35, 0);
 
     return SDL_APP_CONTINUE;
 }
