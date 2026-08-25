@@ -10,11 +10,13 @@ typedef enum {
     T_LEVEL = 0,
     T_MOVES,
     T_PLAY,
+    T_PORTALBAN,
     T_NUM_TX
 } Text_TxId;
 
 bool Text_init(SDL_Renderer*);
 void Text_deinit(); 
 void Text_draw(SDL_Renderer*, Text_TxId, Vec2);
+int Text_getWidth(Text_TxId);
 int Text_getHeight(Text_TxId);
 void Text_drawNumber(SDL_Renderer*, int, int, int, Vec2);

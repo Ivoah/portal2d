@@ -4,7 +4,8 @@
 const char* Text_texturePaths[] = {
     "level.png",
     "moves.png",
-    "play.png"
+    "play.png",
+    "portalban.png"
 };
 
 static SDL_Texture* Text_textures[T_NUM_TX];
@@ -36,6 +37,10 @@ void Text_draw(SDL_Renderer* renderer, Text_TxId id, Vec2 pos) {
     SDL_FRect dst_rect = {pos.x, pos.y, tx->w, height};
 
     SDL_RenderTexture(renderer, tx, &src_rect, &dst_rect);
+}
+
+int Text_getWidth(Text_TxId id) {
+    return Text_textures[id]->w;
 }
 
 int Text_getHeight(Text_TxId id) {

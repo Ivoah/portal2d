@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include "Vec2.h"
+#include "Scene.h"
 
 #define L_TILE_SIZE 32
 #define L_MAX_WIDTH 32
@@ -33,12 +34,4 @@ typedef struct {
     LevelState* state;
 } Level;
 
-bool Level_init(SDL_Renderer*);
-void Level_deinit();
-Level* Level_load(int);
-void Level_free(Level*);
-void Level_draw(SDL_Renderer*, Level*, Vec2);
-void Level_move(Level*, Vec2);
-void Level_shoot(Level*, Vec2);
-void Level_undo(Level*, int);
-bool Level_isWon(Level*);
+Scene Level_scene(SDL_Renderer*);

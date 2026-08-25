@@ -1,46 +1,45 @@
 #include "Level.h"
+#include "main.h"
 #include "Util.h"
 #include "Text.h"
+#include "Scene.h"
 
 const char* Level_texturePaths[] = {
     NULL,
-#define L_BUTTON 1
     "button.png",
-#define L_CUBE   2
     "cube.png",
-#define L_PLAYER 3
     "bendy.png",
-#define L_FLOOR  4
     "floor.png",
-#define L_PWALL  5
     "pwall.png",
-#define L_NPWALL 6
     "npwall.png",
-#define L_ORANGEPORTAL 7
     "orangePortal.png",
-#define L_BLUEPORTAL 8
     "bluePortal.png",
-#define L_LEVEL 9
     "level.png",
-#define L_MOVES 10
     "moves.png"
 };
-#define L_NUM_TX    11
 
-static SDL_Texture* Level_textures[L_NUM_TX];
+typedef enum {
+    L_BUTTON = 1,
+    L_CUBE,
+    L_PLAYER,
+    L_FLOOR,
+    L_PWALL,
+    L_NPWALL,
+    L_ORANGEPORTAL,
+    L_BLUEPORTAL,
+    L_LEVEL,
+    L_MOVES,
+    L_NUM_TX
+} Level_TxId;
 
-bool Level_init(SDL_Renderer* renderer) {
-    // Skip first entry in texture_paths
-    for (int i = 1; i < L_NUM_TX; i++) {
-        Level_textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
-        if (Level_textures[i] == NULL) return false;
-    }
+typedef struct {
+    SDL_Texture* textures[L_NUM_TX];
+    Level* level;
+} LevelSceneState;
 
-    return true;
-}
-
-void Level_deinit() {
-    for (int i = 0; i < L_NUM_TX; i++) if (Level_textures[i] != NULL) SDL_DestroyTexture(Level_textures[i]);
+void Level_free(Level* level) {
+    SDL_free(level->state);
+    SDL_free(level);
 }
 
 Level* Level_load(int num) {
@@ -120,14 +119,20 @@ void Level_freeState(LevelState* state) {
     SDL_free(state);
 }
 
-void Level_free(Level* level) {
-    SDL_free(level->state);
-    SDL_free(level);
+void Level_freeSceneState(void* sceneState) {
+    for (int i = 1; i < L_NUM_TX; i++) SDL_DestroyTexture(((LevelSceneState*)sceneState)->textures[i]);
+    Level_free(((LevelSceneState*)sceneState)->level);
+    SDL_free(sceneState);
 }
 
-void Level_draw(SDL_Renderer* renderer, Level* level, Vec2 offset) {
+void Level_draw(void* sceneState, SDL_Renderer* renderer) {
+    Level* level = ((LevelSceneState*)sceneState)->level;
+    SDL_Texture** textures = ((LevelSceneState*)sceneState)->textures;
+
     SDL_FRect src_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
     SDL_FRect dst_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
+
+    const Vec2 offset = {WINDOW_WIDTH/2 - level->width*L_TILE_SIZE/2, WINDOW_HEIGHT/2 - level->height*L_TILE_SIZE/2};
 
     // Draw map
     for (int i = 0; i < level->height; i++) {
@@ -136,7 +141,7 @@ void Level_draw(SDL_Renderer* renderer, Level* level, Vec2 offset) {
             if (tile > 0) {
                 dst_rect.x = j*L_TILE_SIZE + offset.x;
                 dst_rect.y = i*L_TILE_SIZE + offset.y;
-                SDL_RenderTexture(renderer, Level_textures[tile], NULL, &dst_rect);
+                SDL_RenderTexture(renderer, textures[tile], NULL, &dst_rect);
             }
         }
     }
@@ -145,7 +150,7 @@ void Level_draw(SDL_Renderer* renderer, Level* level, Vec2 offset) {
     for (int i = 0; i < level->numCubes; i++) {
         dst_rect.x = level->state->cubes[i].x*L_TILE_SIZE + offset.x;
         dst_rect.y = level->state->cubes[i].y*L_TILE_SIZE + offset.y;
-        SDL_RenderTexture(renderer, Level_textures[L_CUBE], NULL, &dst_rect);
+        SDL_RenderTexture(renderer, textures[L_CUBE], NULL, &dst_rect);
     }
 
     // Draw portals
@@ -153,24 +158,24 @@ void Level_draw(SDL_Renderer* renderer, Level* level, Vec2 offset) {
     if (level->state->bluePortal.exists) {
         dst_rect.x = level->state->bluePortal.pos.x*L_TILE_SIZE + offset.x;
         dst_rect.y = level->state->bluePortal.pos.y*L_TILE_SIZE + offset.y;
-        SDL_RenderTextureRotated(renderer, Level_textures[L_BLUEPORTAL], &src_rect, &dst_rect, level->state->bluePortal.r*90, NULL, SDL_FLIP_NONE);
+        SDL_RenderTextureRotated(renderer, textures[L_BLUEPORTAL], &src_rect, &dst_rect, level->state->bluePortal.r*90, NULL, SDL_FLIP_NONE);
     }
     if (level->state->orangePortal.exists) {
         dst_rect.x = level->state->orangePortal.pos.x*L_TILE_SIZE + offset.x;
         dst_rect.y = level->state->orangePortal.pos.y*L_TILE_SIZE + offset.y;
-        SDL_RenderTextureRotated(renderer, Level_textures[L_ORANGEPORTAL], &src_rect, &dst_rect, level->state->orangePortal.r*90, NULL, SDL_FLIP_NONE);
+        SDL_RenderTextureRotated(renderer, textures[L_ORANGEPORTAL], &src_rect, &dst_rect, level->state->orangePortal.r*90, NULL, SDL_FLIP_NONE);
     }
 
     // Draw player
     dst_rect.x = level->state->playerLocation.x*L_TILE_SIZE + offset.x;
     dst_rect.y = level->state->playerLocation.y*L_TILE_SIZE + offset.y;
-    SDL_RenderTexture(renderer, Level_textures[L_PLAYER], NULL, &dst_rect);
+    SDL_RenderTexture(renderer, textures[L_PLAYER], NULL, &dst_rect);
 
     Text_draw(renderer, T_LEVEL, (Vec2){0, 0});
-    Text_drawNumber(renderer, level->levelNum, 2, -1, (Vec2){Level_textures[L_LEVEL]->w, 0});
+    Text_drawNumber(renderer, level->levelNum, 2, -1, (Vec2){textures[L_LEVEL]->w, 0});
 
     Text_draw(renderer, T_MOVES, (Vec2){0, Text_getHeight(T_LEVEL)});
-    Text_drawNumber(renderer, level->state->moves, 2, -1, (Vec2){Level_textures[L_MOVES]->w, L_TILE_SIZE});
+    Text_drawNumber(renderer, level->state->moves, 2, -1, (Vec2){textures[L_MOVES]->w, L_TILE_SIZE});
 }
 
 void Level_newState(Level* level) {
@@ -276,4 +281,91 @@ bool Level_isWon(Level* level) {
     }
 
     return true;
+}
+
+SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
+    Level* level = ((LevelSceneState*)sceneState)->level;
+    int levelToLoad = -1;
+    Vec2* moveDir = NULL;
+    Vec2* shotDir = NULL;
+
+    switch (event->type) {
+        case SDL_EVENT_KEY_DOWN:
+            switch (event->key.scancode) {
+                case SDL_SCANCODE_ESCAPE: return SDL_APP_SUCCESS;
+                case SDL_SCANCODE_UP:
+                case SDL_SCANCODE_W:      moveDir = &V_UP; break;
+                case SDL_SCANCODE_DOWN:
+                case SDL_SCANCODE_S:      moveDir = &V_DOWN; break;
+                case SDL_SCANCODE_LEFT:
+                case SDL_SCANCODE_A:      moveDir = &V_LEFT; break;
+                case SDL_SCANCODE_RIGHT:
+                case SDL_SCANCODE_D:      moveDir = &V_RIGHT; break;
+                case SDL_SCANCODE_I:      shotDir = &V_UP; break;
+                case SDL_SCANCODE_K:      shotDir = &V_DOWN; break;
+                case SDL_SCANCODE_J:      shotDir = &V_LEFT; break;
+                case SDL_SCANCODE_L:      shotDir = &V_RIGHT; break;
+                default: break;
+            }
+            switch (event->key.key) {
+                case SDLK_R:      Level_undo(level, -1); break;
+                case SDLK_COMMA:  levelToLoad = level->levelNum - 1; break;
+                case SDLK_PERIOD: levelToLoad = level->levelNum + 1; break;
+                case SDLK_U:      Level_undo(level, 1); break;
+                default: break;
+            }
+            break;
+        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+            switch (event->gbutton.button) {
+                case SDL_GAMEPAD_BUTTON_DPAD_UP:    moveDir = &V_UP; break;
+                case SDL_GAMEPAD_BUTTON_DPAD_DOWN:  moveDir = &V_DOWN; break;
+                case SDL_GAMEPAD_BUTTON_DPAD_LEFT:  moveDir = &V_LEFT; break;
+                case SDL_GAMEPAD_BUTTON_DPAD_RIGHT: moveDir = &V_RIGHT; break;
+                case SDL_GAMEPAD_BUTTON_NORTH:      shotDir = &V_UP; break;
+                case SDL_GAMEPAD_BUTTON_SOUTH:      shotDir = &V_DOWN; break;
+                case SDL_GAMEPAD_BUTTON_WEST:       shotDir = &V_LEFT; break;
+                case SDL_GAMEPAD_BUTTON_EAST:       shotDir = &V_RIGHT; break;
+                case SDL_GAMEPAD_BUTTON_BACK:       Level_undo(level, 1); break;
+                case SDL_GAMEPAD_BUTTON_START:      Level_undo(level, -1); break;
+                default: break;
+            }
+            break;
+    }
+
+    if (moveDir != NULL) Level_move(level, *moveDir);
+    if (shotDir != NULL) Level_shoot(level, *shotDir);
+
+    // Advance level if won
+    if (Level_isWon(level)) {
+        levelToLoad = level->levelNum + 1;
+    }
+
+    if (levelToLoad != -1) {
+        levelToLoad = levelToLoad%10;
+        Level_free(level);
+        ((LevelSceneState*)sceneState)->level = Level_load(levelToLoad);
+        if (level == NULL) return SDL_APP_SUCCESS;
+    }
+
+    // if (level->state->lastShotBlue) SDL_SetGamepadLED(state->gamepad, 0, 0, 255);
+    // else                                          SDL_SetGamepadLED(state->gamepad, 255, 35, 0);
+
+    return SDL_APP_CONTINUE;
+}
+
+Scene Level_scene(SDL_Renderer* renderer) {
+    LevelSceneState* sceneState = SDL_calloc(1, sizeof(LevelSceneState));
+    // Skip first entry in texture_paths
+    for (int i = 1; i < L_NUM_TX; i++) {
+        sceneState->textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
+    }
+
+    sceneState->level = Level_load(0);
+
+    return (Scene){
+        .state = sceneState,
+        .freeState = &Level_freeSceneState,
+        .event = &Level_event,
+        .draw = &Level_draw
+    };
 }
