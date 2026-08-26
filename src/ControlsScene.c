@@ -16,11 +16,6 @@ typedef struct {
     Scene* previousScene;
 } ControlsSceneState;
 
-void ControlsScene_free(Scene* scene) {
-    SDL_free(scene->state);
-    SDL_free(scene);
-}
-
 SDL_AppResult ControlsScene_event(Scene* scene, SDL_Event* event) {
     ControlsSceneState* css = (ControlsSceneState*)scene->state;
 
@@ -45,13 +40,18 @@ void ControlsScene_draw(Scene* scene, SDL_Renderer* renderer) {
     }
 }
 
+void ControlsScene_free(Scene* scene) {
+    SDL_free(scene->state);
+    SDL_free(scene);
+}
+
 Scene* ControlsScene_create(Scene* previousScene) {
     Scene* scene = SDL_calloc(1, sizeof(Scene));
     *scene = (Scene){
         .state = SDL_calloc(1, sizeof(ControlsSceneState)),
-        .free = ControlsScene_free,
         .event = ControlsScene_event,
-        .draw = ControlsScene_draw
+        .draw = ControlsScene_draw,
+        .free = ControlsScene_free
     };
 
     *((ControlsSceneState*)scene->state) = (ControlsSceneState){

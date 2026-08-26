@@ -3,7 +3,7 @@
 
 typedef struct Scene {
     void* state;
-    void (*free)(struct Scene*);
     SDL_AppResult (*event)(struct Scene*, SDL_Event*);
     void (*draw)(struct Scene*, SDL_Renderer*);
+    void (*free)(struct Scene*);
 } Scene;

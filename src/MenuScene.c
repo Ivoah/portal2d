@@ -2,7 +2,7 @@
 #include "Text.h"
 #include "Util.h"
 #include "Event.h"
-#include "Level.h"
+#include "LevelScene.h"
 #include "ControlsScene.h"
 #include "main.h"
 
@@ -12,14 +12,6 @@ typedef struct {
     SDL_Texture* logo;
     SDL_Renderer* renderer;
 } MenuSceneState;
-
-void MenuScene_free(Scene* scene) {
-    MenuSceneState* mss = (MenuSceneState*)scene->state;
-    
-    SDL_DestroyTexture(mss->logo);
-    SDL_free(scene->state);
-    SDL_free(scene);
-}
 
 SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
     MenuSceneState* mss = (MenuSceneState*)scene->state;
@@ -41,7 +33,7 @@ SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
                 case SDL_SCANCODE_RETURN:
                     switch (mss->menuItem) {
                         case 1:
-                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = Level_scene(mss->renderer, mss->level)});
+                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = LevelScene_create(mss->renderer, mss->level)});
                             break;
                         case 2:
                             SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_NO_FREE, .user.data1 = ControlsScene_create(scene)});
@@ -77,13 +69,21 @@ void MenuScene_draw(Scene* scene, SDL_Renderer* renderer) {
     Text_drawCentered(renderer, mss->menuItem == 3 ? "<Quit>" : "Quit", 350);
 }
 
+void MenuScene_free(Scene* scene) {
+    MenuSceneState* mss = (MenuSceneState*)scene->state;
+    
+    SDL_DestroyTexture(mss->logo);
+    SDL_free(scene->state);
+    SDL_free(scene);
+}
+
 Scene* MenuScene_create(SDL_Renderer* renderer, int level, int menuItem) {
     Scene* scene = SDL_calloc(1, sizeof(Scene));
     *scene = (Scene){
         .state = SDL_calloc(1, sizeof(MenuSceneState)),
-        .free = MenuScene_free,
         .event = MenuScene_event,
-        .draw = MenuScene_draw
+        .draw = MenuScene_draw,
+        .free = MenuScene_free
     };
 
     *((MenuSceneState*)scene->state) = (MenuSceneState){
