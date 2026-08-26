@@ -3,4 +3,4 @@
 
 #include "Scene.h"
 
-Scene* Menu_scene(SDL_Renderer*, int, int);
+Scene* ControlsScene_create(Scene*);

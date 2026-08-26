@@ -1,11 +1,9 @@
-#include "Menu.h"
+#include "MenuScene.h"
 #include "Text.h"
-#include "Scene.h"
-#include "Save.h"
 #include "Util.h"
 #include "Event.h"
 #include "Level.h"
-#include "Controls.h"
+#include "ControlsScene.h"
 #include "main.h"
 
 typedef struct {
@@ -46,7 +44,7 @@ SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
                             SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = Level_scene(mss->renderer, mss->level)});
                             break;
                         case 2:
-                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_NO_FREE, .user.data1 = Controls_scene(scene)});
+                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_NO_FREE, .user.data1 = ControlsScene_create(scene)});
                             break;
                         case 3: return SDL_APP_SUCCESS;
                     }
@@ -79,7 +77,7 @@ void MenuScene_draw(Scene* scene, SDL_Renderer* renderer) {
     Text_drawCentered(renderer, mss->menuItem == 3 ? "<Quit>" : "Quit", 350);
 }
 
-Scene* Menu_scene(SDL_Renderer* renderer, int level, int menuItem) {
+Scene* MenuScene_create(SDL_Renderer* renderer, int level, int menuItem) {
     Scene* scene = SDL_calloc(1, sizeof(Scene));
     *scene = (Scene){
         .state = SDL_calloc(1, sizeof(MenuSceneState)),

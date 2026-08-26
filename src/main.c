@@ -5,7 +5,7 @@
 
 #include "Scene.h"
 #include "Level.h"
-#include "Menu.h"
+#include "MenuScene.h"
 #include "Event.h"
 #include "Text.h"
 
@@ -38,7 +38,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
     if (!Event_init()) return SDL_APP_FAILURE;
 
-    gamestate->scene = Menu_scene(gamestate->renderer, 0, 0);
+    gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
 
     return SDL_APP_CONTINUE;
 }

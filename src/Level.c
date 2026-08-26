@@ -3,7 +3,7 @@
 #include "Util.h"
 #include "Text.h"
 #include "Scene.h"
-#include "Menu.h"
+#include "MenuScene.h"
 #include "Vec2.h"
 #include "Event.h"
 
@@ -331,7 +331,7 @@ SDL_AppResult LevelScene_event(Scene* scene, SDL_Event* event) {
         case SDL_EVENT_KEY_DOWN:
             switch (event->key.scancode) {
                 case SDL_SCANCODE_ESCAPE:
-                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = Menu_scene(lss->renderer, lss->level->levelNum, 0)});
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = MenuScene_create(lss->renderer, lss->level->levelNum, 0)});
                     return SDL_APP_CONTINUE;
                 case SDL_SCANCODE_UP:
                 case SDL_SCANCODE_W:      moveDir = &V_UP; break;
@@ -367,7 +367,7 @@ SDL_AppResult LevelScene_event(Scene* scene, SDL_Event* event) {
                 case SDL_GAMEPAD_BUTTON_EAST:       shotDir = &V_RIGHT; break;
                 case SDL_GAMEPAD_BUTTON_BACK:       Level_undo(lss->level, 1); break;
                 case SDL_GAMEPAD_BUTTON_START:
-                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = Menu_scene(lss->renderer, lss->level->levelNum, 0)});
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = MenuScene_create(lss->renderer, lss->level->levelNum, 0)});
                     return SDL_APP_CONTINUE;
                 default: break;
             }

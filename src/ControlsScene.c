@@ -1,10 +1,7 @@
-#include "Menu.h"
+#include "ControlsScene.h"
 #include "Text.h"
-#include "Scene.h"
 #include "Save.h"
-#include "Util.h"
 #include "Event.h"
-#include "Level.h"
 #include "main.h"
 
 const char* messages[] = {
@@ -48,7 +45,7 @@ void ControlsScene_draw(Scene* scene, SDL_Renderer* renderer) {
     }
 }
 
-Scene* Controls_scene(Scene* previousScene) {
+Scene* ControlsScene_create(Scene* previousScene) {
     Scene* scene = SDL_calloc(1, sizeof(Scene));
     *scene = (Scene){
         .state = SDL_calloc(1, sizeof(ControlsSceneState)),
