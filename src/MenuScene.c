@@ -52,11 +52,11 @@ void MenuScene_draw(Scene* scene, SDL_Renderer* renderer) {
 
     Util_drawWobbly(renderer, mss->logo, (Vec2){WINDOW_WIDTH/2 - mss->logo->w/2, 100});
 
-    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), mss->menuItem == 0 ? "<Level %d>" : "Level %d", mss->level + 1);
+    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), mss->menuItem == 0 ? "OLevel <%d>" : "Level %d", mss->level + 1);
     Text_drawCentered(renderer, fmtStr, 200);
-    Text_drawCentered(renderer, mss->menuItem == 1 ? "<Play>" : "Play", 250);
-    Text_drawCentered(renderer, mss->menuItem == 2 ? "<Controls>" : "Controls", 300);
-    Text_drawCentered(renderer, mss->menuItem == 3 ? "<Quit>" : "Quit", 350);
+    Text_drawCentered(renderer, mss->menuItem == 1 ? "OPlay" : "Play", 250);
+    Text_drawCentered(renderer, mss->menuItem == 2 ? "OControls" : "Controls", 300);
+    Text_drawCentered(renderer, mss->menuItem == 3 ? "OQuit" : "Quit", 350);
 }
 
 void MenuScene_free(Scene* scene) {
