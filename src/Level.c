@@ -6,47 +6,22 @@
 #include "Vec2.h"
 #include "Event.h"
 
-const char* Level_texturePaths[] = {
-    NULL,
-    "button.png",
-    "cube.png",
-    "bendy.png",
-    "floor.png",
-    "pwall.png",
-    "npwall.png",
-    "orangePortal.png",
-    "bluePortal.png"
-};
-
 typedef enum {
     L_AIR,
     L_BUTTON,
     L_CUBE,
-    L_PLAYER,
+    L_BENDY,
     L_FLOOR,
     L_PWALL,
     L_NPWALL,
-    L_ORANGEPORTAL,
-    L_BLUEPORTAL,
+    L_ORANGEPORTAL1,
+    L_ORANGEPORTAL2,
+    L_BLUEPORTAL1,
+    L_BLUEPORTAL2,
     L_NUM_TX
-} Level_TxId;
+} Level_TileId;
 
 #define L_TILE_SIZE 32
-
-SDL_Texture** Level_loadTextures(SDL_Renderer* renderer) {
-    SDL_Texture** textures = SDL_calloc(L_NUM_TX, sizeof(SDL_Texture*));
-
-    for (int i = 1; i < L_NUM_TX; i++) {
-        textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
-    }
-
-    return textures;
-}
-
-void Level_freeTextures(SDL_Texture** textures) {
-    for (int i = 1; i < L_NUM_TX; i++) SDL_DestroyTexture(textures[i]);
-    SDL_free(textures);
-}
 
 Level* Level_load(int num) {
     char* levelPath = NULL;
@@ -235,9 +210,21 @@ bool Level_isWon(Level* level) {
     return true;
 }
 
-void Level_draw(SDL_Renderer* renderer, Level* level, SDL_Texture** textures) {
+void Level_drawTile(SDL_Renderer* renderer, SDL_Texture* tiles, Level_TileId tile, const Vec2* pos) {
+    SDL_FRect src_rect = {tile*L_TILE_SIZE, 0, L_TILE_SIZE, L_TILE_SIZE};
+    SDL_FRect dst_rect = {pos->x, pos->y, L_TILE_SIZE, L_TILE_SIZE};
+    SDL_RenderTexture(renderer, tiles, &src_rect, &dst_rect);
+}
+
+void Level_drawPortal(SDL_Renderer* renderer, SDL_Texture* tiles, bool bluePortal, const Vec2* pos, double angle) {
+    SDL_FRect src_rect = {(bluePortal ? L_BLUEPORTAL1 : L_ORANGEPORTAL1)*L_TILE_SIZE + (SDL_GetTicks()/100)%L_TILE_SIZE, 0, L_TILE_SIZE, L_TILE_SIZE};
+    SDL_FRect dst_rect = {pos->x, pos->y, L_TILE_SIZE, L_TILE_SIZE};
+    SDL_RenderTextureRotated(renderer, tiles, &src_rect, &dst_rect, angle, NULL, SDL_FLIP_NONE);
+}
+
+void Level_draw(SDL_Renderer* renderer, SDL_Texture* tiles, Level* level) {
     SDL_FRect src_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
-    SDL_FRect dst_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
+    Vec2 dst = {0, 0};
 
     const Vec2 offset = {WINDOW_WIDTH/2 - level->width*L_TILE_SIZE/2, WINDOW_HEIGHT/2 - level->height*L_TILE_SIZE/2};
 
@@ -246,37 +233,36 @@ void Level_draw(SDL_Renderer* renderer, Level* level, SDL_Texture** textures) {
         for (int j = 0; j < level->width; j++) {
             int tile = level->tiles[i][j];
             if (tile > 0) {
-                dst_rect.x = j*L_TILE_SIZE + offset.x;
-                dst_rect.y = i*L_TILE_SIZE + offset.y;
-                SDL_RenderTexture(renderer, textures[tile], NULL, &dst_rect);
+                dst.x = j*L_TILE_SIZE + offset.x;
+                dst.y = i*L_TILE_SIZE + offset.y;
+                Level_drawTile(renderer, tiles, tile, &dst);
             }
         }
     }
 
     // Draw cubes
     for (int i = 0; i < level->numCubes; i++) {
-        dst_rect.x = level->state->cubes[i].x*L_TILE_SIZE + offset.x;
-        dst_rect.y = level->state->cubes[i].y*L_TILE_SIZE + offset.y;
-        SDL_RenderTexture(renderer, textures[L_CUBE], NULL, &dst_rect);
+        dst.x = level->state->cubes[i].x*L_TILE_SIZE + offset.x;
+        dst.y = level->state->cubes[i].y*L_TILE_SIZE + offset.y;
+        Level_drawTile(renderer, tiles, L_CUBE, &dst);
     }
 
     // Draw portals
-    src_rect.x = (SDL_GetTicks()/100)%L_TILE_SIZE;
     if (level->state->bluePortal.exists) {
-        dst_rect.x = level->state->bluePortal.pos.x*L_TILE_SIZE + offset.x;
-        dst_rect.y = level->state->bluePortal.pos.y*L_TILE_SIZE + offset.y;
-        SDL_RenderTextureRotated(renderer, textures[L_BLUEPORTAL], &src_rect, &dst_rect, level->state->bluePortal.r*90, NULL, SDL_FLIP_NONE);
+        dst.x = level->state->bluePortal.pos.x*L_TILE_SIZE + offset.x;
+        dst.y = level->state->bluePortal.pos.y*L_TILE_SIZE + offset.y;
+        Level_drawPortal(renderer, tiles, true, &dst, level->state->bluePortal.r*90);
     }
     if (level->state->orangePortal.exists) {
-        dst_rect.x = level->state->orangePortal.pos.x*L_TILE_SIZE + offset.x;
-        dst_rect.y = level->state->orangePortal.pos.y*L_TILE_SIZE + offset.y;
-        SDL_RenderTextureRotated(renderer, textures[L_ORANGEPORTAL], &src_rect, &dst_rect, level->state->orangePortal.r*90, NULL, SDL_FLIP_NONE);
+        dst.x = level->state->orangePortal.pos.x*L_TILE_SIZE + offset.x;
+        dst.y = level->state->orangePortal.pos.y*L_TILE_SIZE + offset.y;
+        Level_drawPortal(renderer, tiles, false, &dst, level->state->orangePortal.r*90);
     }
 
     // Draw player
-    dst_rect.x = level->state->playerLocation.x*L_TILE_SIZE + offset.x;
-    dst_rect.y = level->state->playerLocation.y*L_TILE_SIZE + offset.y;
-    SDL_RenderTexture(renderer, textures[L_PLAYER], NULL, &dst_rect);
+    dst.x = level->state->playerLocation.x*L_TILE_SIZE + offset.x;
+    dst.y = level->state->playerLocation.y*L_TILE_SIZE + offset.y;
+    Level_drawTile(renderer, tiles, L_BENDY, &dst);
 
     char fmtStr[100];
     SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Level: %d", level->levelNum + 1);

@@ -37,7 +37,7 @@ SDL_Texture** Level_loadTextures(SDL_Renderer*);
 void Level_freeTextures(SDL_Texture**);
 Level* Level_load(int);
 void Level_free(Level*);
-void Level_draw(SDL_Renderer*, Level*, SDL_Texture**);
+void Level_draw(SDL_Renderer*, SDL_Texture*, Level*);
 void Level_move(Level*, Vec2);
 void Level_shoot(Level*, Vec2);
 void Level_undo(Level*, int);

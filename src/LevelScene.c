@@ -1,11 +1,12 @@
 #include "LevelScene.h"
 #include "Level.h"
 #include "MenuScene.h"
+#include "Util.h"
 #include "Event.h"
 
 typedef struct {
     SDL_Renderer* renderer;
-    SDL_Texture** textures;
+    SDL_Texture* tiles;
     Level* level;
 } LevelSceneState;
 
@@ -89,16 +90,13 @@ SDL_AppResult LevelScene_event(Scene* scene, SDL_Event* event) {
 void LevelScene_draw(Scene* scene, SDL_Renderer* renderer) {
     LevelSceneState* lss = (LevelSceneState*)scene->state;
 
-    Level* level = lss->level;
-    SDL_Texture** textures = lss->textures;
-
-    Level_draw(renderer, level, textures);
+    Level_draw(renderer, lss->tiles, lss->level);
 }
 
 void LevelScene_free(Scene* scene) {
     LevelSceneState* lss = (LevelSceneState*)scene->state;
 
-    Level_freeTextures(lss->textures);
+    SDL_DestroyTexture(lss->tiles);
     Level_free(lss->level);
     SDL_free(scene->state);
     SDL_free(scene);
@@ -115,7 +113,7 @@ Scene* LevelScene_create(SDL_Renderer* renderer, int level) {
 
     *((LevelSceneState*)scene->state) = (LevelSceneState){
         .renderer = renderer,
-        .textures = Level_loadTextures(renderer),
+        .tiles = Util_loadTexture(renderer, "tiles.png"),
         .level = Level_load(level),
     };
 

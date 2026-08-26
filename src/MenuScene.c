@@ -66,7 +66,7 @@ void MenuScene_draw(Scene* scene, SDL_Renderer* renderer) {
     SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), mss->menuItem == 0 ? "<Level %d>" : "Level %d", mss->level + 1);
     Text_drawCentered(renderer, fmtStr, 200);
     Text_drawCentered(renderer, mss->menuItem == 1 ? "<Play>" : "Play", 250);
-    Text_drawCentered(renderer, mss->menuItem == 2 ? "<Controls?>" : "Controls?", 300);
+    Text_drawCentered(renderer, mss->menuItem == 2 ? "<Controls>" : "Controls", 300);
     Text_drawCentered(renderer, mss->menuItem == 3 ? "<Quit>" : "Quit", 350);
 }
 
