@@ -1,6 +1,0 @@
-? = button
-c = cube
-> = player
-. = floor
-# = wall
-@ = non-portal wall

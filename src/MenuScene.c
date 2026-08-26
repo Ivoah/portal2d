@@ -1,11 +1,13 @@
 #include "MenuScene.h"
-#include "Text.h"
-#include "Util.h"
+
+#include "main.h"
+#include "Vec2.h"
 #include "Event.h"
 #include "Input.h"
+#include "Util.h"
+#include "Text.h"
 #include "LevelScene.h"
 #include "ControlsScene.h"
-#include "main.h"
 
 typedef struct {
     int level;

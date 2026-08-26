@@ -1,9 +1,9 @@
 #include "LevelScene.h"
+
 #include "Level.h"
-#include "MenuScene.h"
-#include "Util.h"
 #include "Input.h"
 #include "Event.h"
+#include "Util.h"
 
 typedef struct {
     SDL_Renderer* renderer;
@@ -14,43 +14,23 @@ typedef struct {
 SDL_AppResult LevelScene_event(Scene* scene, SDL_Event* event) {
     LevelSceneState* lss = (LevelSceneState*)scene->state;
     
-    int levelToLoad = -1;
-    Vec2* moveDir = NULL;
-    Vec2* shotDir = NULL;
-
     switch (Input_fromEvent(event, false)) {
-        case I_UP:          moveDir = &V_UP; break;
-        case I_DOWN:        moveDir = &V_DOWN; break;
-        case I_LEFT:        moveDir = &V_LEFT; break;
-        case I_RIGHT:       moveDir = &V_RIGHT; break;
-        case I_SHOOT_UP:    shotDir = &V_UP; break;
-        case I_SHOOT_DOWN:  shotDir = &V_DOWN; break;
-        case I_SHOOT_LEFT:  shotDir = &V_LEFT; break;
-        case I_SHOOT_RIGHT: shotDir = &V_RIGHT; break;
+        case I_UP:          break;
+        case I_DOWN:        break;
+        case I_LEFT:        break;
+        case I_RIGHT:       break;
+        case I_SHOOT_UP:    break;
+        case I_SHOOT_DOWN:  break;
+        case I_SHOOT_LEFT:  break;
+        case I_SHOOT_RIGHT: break;
         case I_BACK:        SDL_PushEvent(&(SDL_Event){.user.type = EVENT_POP_SCENE}); return SDL_APP_CONTINUE;
-        case I_RESET:       Level_undo(lss->level, -1);
-        case I_UNDO:        Level_undo(lss->level, 1);
         default: break;
     }
 
-    if (moveDir != NULL) Level_move(lss->level, *moveDir);
-    if (shotDir != NULL) Level_shoot(lss->level, *shotDir);
-
-    // Advance level if won
-    if (Level_isWon(lss->level)) {
-        levelToLoad = lss->level->levelNum + 1;
-    }
-
-    if (levelToLoad != -1) {
-        levelToLoad = levelToLoad%10;
-        Level_free(lss->level);
-        lss->level = Level_load(levelToLoad);
-    }
-
-    if (lss->level->state->lastShotBlue)
-        SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 0, 0, 255);
-    else
-        SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 255, 35, 0);
+    // if (lss->level->state->lastShotBlue)
+    //     SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 0, 0, 255);
+    // else
+    //     SDL_SetGamepadLED(SDL_GetGamepadFromPlayerIndex(0), 255, 35, 0);
 
     return SDL_APP_CONTINUE;
 }

@@ -13,9 +13,7 @@ typedef enum {
     I_SHOOT_LEFT,
     I_SHOOT_RIGHT,
     I_CONFIRM,
-    I_BACK,
-    I_RESET,
-    I_UNDO,
+    I_BACK
 } InputButton;
 
 InputButton Input_fromEvent(SDL_Event*, bool);

@@ -4,13 +4,13 @@
 VITA_CC := arm-vita-eabi-gcc
 WEB_CC := emcc
 
-VITA_TITLE := Portalban
+VITA_TITLE := Portal2D
 VITA_APP_VER := 01.00
 VITA_TITLEID := IVOAH0001
 
 LIBS := sdl3
 
-EXE := portalban
+EXE := portal2d
 
 CFLAGS += $(shell pkg-config --cflags $(LIBS)) -g -fsanitize=address -fno-omit-frame-pointer
 LDFLAGS += $(shell pkg-config --libs $(LIBS)) -g -fsanitize=address -fno-omit-frame-pointer

@@ -1,14 +1,14 @@
+#include "main.h"
+
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-#include "main.h"
-
 #include "Scene.h"
-#include "Level.h"
-#include "MenuScene.h"
-#include "Event.h"
 #include "Text.h"
 #include "Util.h"
+#include "Event.h"
+#include "MenuScene.h"
+#include "LevelScene.h"
 
 typedef struct {
     SDL_Window* window;
@@ -43,7 +43,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
     if (!Event_init()) return SDL_APP_FAILURE;
 
-    gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
+    // gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
+    gamestate->scene = LevelScene_create(gamestate->renderer, 0);
 
     return SDL_APP_CONTINUE;
 }
@@ -75,6 +76,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
                 Scene* previousScene = gamestate->scene->previousScene;
                 gamestate->scene->free(gamestate->scene);
                 gamestate->scene = previousScene;
+                if (previousScene == NULL) return SDL_APP_FAILURE;
                 return SDL_APP_CONTINUE;
              } else return gamestate->scene->event(gamestate->scene, event);
     }

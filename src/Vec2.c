@@ -1,5 +1,4 @@
 #include "Vec2.h"
-#include "SDL3/SDL.h"
 
 Vec2 Vec2_add(const Vec2* v1, const Vec2* v2) {
     return (Vec2){v1->x + v2->x, v1->y + v2->y};

@@ -21,11 +21,6 @@ InputButton Input_fromEvent(SDL_Event* event, bool inMenu) {
                 case SDL_SCANCODE_L:      return I_SHOOT_RIGHT;
                 default: break;
             }
-            switch (event->key.key) {
-                case SDLK_R:      return I_RESET;
-                case SDLK_U:      return I_UNDO;
-                default: break;
-            }
             break;
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
             switch (event->gbutton.button) {
@@ -38,8 +33,6 @@ InputButton Input_fromEvent(SDL_Event* event, bool inMenu) {
                 case SDL_GAMEPAD_BUTTON_WEST:           return                      I_SHOOT_LEFT;
                 case SDL_GAMEPAD_BUTTON_EAST:           return inMenu ? I_BACK    : I_SHOOT_RIGHT;
                 case SDL_GAMEPAD_BUTTON_START:          return inMenu ? I_CONFIRM : I_BACK;
-                case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:  return                      I_UNDO;
-                case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER: return                      I_RESET;
                 default: break;
             }
             break;
