@@ -25,7 +25,7 @@ void Text_metrics(SDL_Surface* surface, int i, int start[2], int width[2]) {
                 SDL_ReadSurfacePixel(surface, i*T_SIZE + x, j*T_SIZE + y, NULL, NULL, NULL, &a);
                 if (a > 0) {
                     start[j] = SDL_min(start[j], x);
-                    width[j] = SDL_max(width[j], x - start[j]);
+                    width[j] = SDL_max(width[j], x - start[j] + 1);
                 }
             }
         }
