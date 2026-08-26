@@ -32,17 +32,14 @@ pc: $(EXE)
 vita: $(EXE).vpk
 web: $(EXE).html
 
+%_build:
+	mkdir -p $@
+
 $(EXE): $(OBJS)
 	$(CC) $^ $(LDFLAGS) -o $@
 
-pc_build/%.o: src/%.c | pc_build
+pc_build/%.o: src/%.c src/%.h | pc_build
 	$(CC) -c $(CFLAGS) -o $@ $<
-
-$(EXE).html $(EXE).js $(EXE).wasm $(EXE).data: $(WEB_OBJS)
-	$(WEB_CC) $^ $(WEB_LDFLAGS) -o $@ --preload-file levels --preload-file sprites
-
-web_build/%.o: src/%.c | web_build
-	$(WEB_CC) -c $(WEB_CFLAGS) -o $@ $<
 
 $(EXE).vpk: vita_build/$(EXE).self vita_build/param.sfo sce_sys levels sprites
 	vita-pack-vpk -s vita_build/param.sfo -b vita_build/$(EXE).self \
@@ -69,11 +66,14 @@ vita_build/$(EXE).velf: vita_build/$(EXE).elf
 vita_build/$(EXE).elf: $(VITA_OBJS)
 	$(VITA_CC) -g $^ $(VITA_LDFLAGS) -o $@
 
-%_build:
-	mkdir -p $@
-
-vita_build/%.o : src/%.c | vita_build
+vita_build/%.o : src/%.c src/%.h | vita_build
 	$(VITA_CC) -c $(VITA_CFLAGS) -o $@ $<
+
+$(EXE).html $(EXE).js $(EXE).wasm $(EXE).data: $(WEB_OBJS)
+	$(WEB_CC) $^ $(WEB_LDFLAGS) -o $@ --preload-file levels --preload-file sprites
+
+web_build/%.o: src/%.c src/%.h | web_build
+	$(WEB_CC) -c $(WEB_CFLAGS) -o $@ $<
 
 clean:
 	rm -rf $(EXE) $(EXE).vpk $(EXE).html $(EXE).js $(EXE).wasm $(EXE).data *_build
