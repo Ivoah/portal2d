@@ -3,6 +3,7 @@
 #include "Util.h"
 #include "Text.h"
 #include "Scene.h"
+#include "Menu.h"
 #include "Event.h"
 
 const char* Level_texturePaths[] = {
@@ -14,13 +15,12 @@ const char* Level_texturePaths[] = {
     "pwall.png",
     "npwall.png",
     "orangePortal.png",
-    "bluePortal.png",
-    "level.png",
-    "moves.png"
+    "bluePortal.png"
 };
 
 typedef enum {
-    L_BUTTON = 1,
+    L_AIR,
+    L_BUTTON,
     L_CUBE,
     L_PLAYER,
     L_FLOOR,
@@ -28,13 +28,12 @@ typedef enum {
     L_NPWALL,
     L_ORANGEPORTAL,
     L_BLUEPORTAL,
-    L_LEVEL,
-    L_MOVES,
     L_NUM_TX
 } Level_TxId;
 
 typedef struct {
     SDL_Texture* textures[L_NUM_TX];
+    SDL_Renderer* renderer;
     Level* level;
 } LevelSceneState;
 
@@ -294,7 +293,11 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
     switch (event->type) {
         case SDL_EVENT_KEY_DOWN:
             switch (event->key.scancode) {
-                case SDL_SCANCODE_ESCAPE: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_MENU, .user.code = lss->level->levelNum}); return SDL_APP_CONTINUE;
+                case SDL_SCANCODE_ESCAPE: {}
+                    Scene* scene = SDL_calloc(1, sizeof(Scene));
+                    *scene = Menu_scene(lss->renderer, lss->level->levelNum, 0);
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = scene});
+                    return SDL_APP_CONTINUE;
                 case SDL_SCANCODE_UP:
                 case SDL_SCANCODE_W:      moveDir = &V_UP; break;
                 case SDL_SCANCODE_DOWN:
@@ -328,7 +331,11 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
                 case SDL_GAMEPAD_BUTTON_WEST:       shotDir = &V_LEFT; break;
                 case SDL_GAMEPAD_BUTTON_EAST:       shotDir = &V_RIGHT; break;
                 case SDL_GAMEPAD_BUTTON_BACK:       Level_undo(lss->level, 1); break;
-                case SDL_GAMEPAD_BUTTON_START:      Level_undo(lss->level, -1); break;
+                case SDL_GAMEPAD_BUTTON_START: {}
+                    Scene* scene = SDL_calloc(1, sizeof(Scene));
+                    *scene = Menu_scene(lss->renderer, lss->level->levelNum, 0);
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = scene});
+                    return SDL_APP_CONTINUE;
                 default: break;
             }
             break;
@@ -363,7 +370,7 @@ Scene Level_scene(SDL_Renderer* renderer, int level) {
     for (int i = 1; i < L_NUM_TX; i++) {
         sceneState->textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
     }
-
+    sceneState->renderer = renderer;
     sceneState->level = Level_load(level);
 
     return (Scene){

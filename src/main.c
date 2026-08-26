@@ -38,7 +38,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
     if (!Event_init()) return SDL_APP_FAILURE;
 
-    gamestate->scene = Menu_scene(gamestate->renderer, 0);
+    gamestate->scene = Menu_scene(gamestate->renderer, 0, 0);
 
     return SDL_APP_CONTINUE;
 }
@@ -53,13 +53,10 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
             if (gamestate->gamepad == NULL) gamestate->gamepad = SDL_OpenGamepad(event->gbutton.which);
             return SDL_APP_CONTINUE;
         default:
-            if (event->type == EVENT_LOAD_LEVEL) {
+            if (event->type == EVENT_LOAD_SCENE) {
                 gamestate->scene.freeState(gamestate->scene.state);
-                gamestate->scene = Level_scene(gamestate->renderer, event->user.code);
-                return SDL_APP_CONTINUE;
-            } else if (event->type == EVENT_LOAD_MENU) {
-                gamestate->scene.freeState(gamestate->scene.state);
-                gamestate->scene = Menu_scene(gamestate->renderer, event->user.code);
+                gamestate->scene = *(Scene*)event->user.data1;
+                SDL_free(event->user.data1);
                 return SDL_APP_CONTINUE;
              } else return gamestate->scene.event(gamestate->scene.state, event);
     }
