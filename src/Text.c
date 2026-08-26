@@ -9,7 +9,7 @@ static int starts[T_NUM_CHARS][2];
 static int widths[T_NUM_CHARS][2];
 
 void Text_metrics(SDL_Surface* surface, int i, int start[2], int width[2]) {
-    // Manually override space character
+    // Special case for space character
     if (i == 0) {
         start[0] = start[1] = 0;
         width[0] = width[1] = T_SPACING;
@@ -53,7 +53,6 @@ void Text_draw(SDL_Renderer* renderer, const char* str, Vec2 pos) {
 
     for (const char* c = str; *c != '\0'; c += sizeof(char)) {
         int i = *c - ' ';
-        // SDL_Log("c: %c, start: %d, width: %d", *c, starts[i][j], widths[i][j]);
         src_rect.x = i*T_SIZE + starts[i][j];
         src_rect.w = widths[i][j];
         dst_rect.w = widths[i][j];

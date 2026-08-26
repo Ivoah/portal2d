@@ -33,12 +33,6 @@ void Menu_draw(void* sceneState, SDL_Renderer* renderer) {
 
     SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Level <%02d>", mss->level);
     Text_drawCentered(renderer, fmtStr, 200);
-
-    // int x = WINDOW_WIDTH/2 - (Text_getWidth(T_LEVEL) + T_TEXT_HEIGHT*4)/2;
-    // Text_draw(renderer, T_LEVEL, (Vec2){x, 200}); x += Text_getWidth(T_LEVEL);
-    // Text_draw(renderer, T_LT, (Vec2){x, 200}); x += Text_getWidth(T_LT);
-    // Text_drawNumber(renderer, mss->level, 2, 2, (Vec2){x, 200}); x += T_TEXT_HEIGHT*2;
-    // Text_draw(renderer, T_GT, (Vec2){x, 200});
 }
 
 Scene Menu_scene(SDL_Renderer* renderer) {

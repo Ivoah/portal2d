@@ -49,7 +49,6 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
             return SDL_APP_SUCCESS;
 
         case SDL_EVENT_GAMEPAD_ADDED:
-            // SDL_Log("Gamepad added: %d", event->gdevice.which);
             if (gamestate->gamepad == NULL) gamestate->gamepad = SDL_OpenGamepad(event->gbutton.which);
             return SDL_APP_CONTINUE;
         default:
