@@ -4,6 +4,7 @@
 #include "Text.h"
 #include "Scene.h"
 #include "Menu.h"
+#include "Vec2.h"
 #include "Event.h"
 
 const char* Level_texturePaths[] = {
@@ -31,14 +32,49 @@ typedef enum {
     L_NUM_TX
 } Level_TxId;
 
+#define L_TILE_SIZE 32
+#define L_MAX_WIDTH 32
+#define L_MAX_HEIGHT 32
+#define L_MAX_CUBES 32
+
+typedef struct {
+    bool exists;
+    Vec2 pos;
+    int r;
+} Portal;
+
+typedef struct LevelState {
+    int moves;
+    Vec2 playerLocation;
+    Vec2 cubes[L_MAX_CUBES];
+    Portal orangePortal;
+    Portal bluePortal;
+    bool lastShotBlue;
+    struct LevelState* lastState;
+} LevelState;
+
+typedef struct {
+    int levelNum;
+    int tiles[L_MAX_HEIGHT][L_MAX_WIDTH];
+    int width;
+    int height;
+    int numCubes;
+    LevelState* state;
+} Level;
+
 typedef struct {
     SDL_Texture* textures[L_NUM_TX];
     SDL_Renderer* renderer;
     Level* level;
 } LevelSceneState;
 
+void Level_freeState(LevelState* state) {
+    if (state->lastState != NULL) Level_freeState(state->lastState);
+    SDL_free(state);
+}
+
 void Level_free(Level* level) {
-    SDL_free(level->state);
+    Level_freeState(level->state);
     SDL_free(level);
 }
 
@@ -114,20 +150,20 @@ Level* Level_load(int num) {
     return newLevel;
 }
 
-void Level_freeState(LevelState* state) {
-    if (state->lastState != NULL) Level_freeState(state->lastState);
-    SDL_free(state);
+void LevelScene_free(Scene* scene) {
+    LevelSceneState* lss = (LevelSceneState*)scene->state;
+
+    for (int i = 1; i < L_NUM_TX; i++) SDL_DestroyTexture(lss->textures[i]);
+    Level_free(lss->level);
+    SDL_free(scene->state);
+    SDL_free(scene);
 }
 
-void Level_freeSceneState(void* sceneState) {
-    for (int i = 1; i < L_NUM_TX; i++) SDL_DestroyTexture(((LevelSceneState*)sceneState)->textures[i]);
-    Level_free(((LevelSceneState*)sceneState)->level);
-    SDL_free(sceneState);
-}
+void LevelScene_draw(Scene* scene, SDL_Renderer* renderer) {
+    LevelSceneState* lss = (LevelSceneState*)scene->state;
 
-void Level_draw(void* sceneState, SDL_Renderer* renderer) {
-    Level* level = ((LevelSceneState*)sceneState)->level;
-    SDL_Texture** textures = ((LevelSceneState*)sceneState)->textures;
+    Level* level = lss->level;
+    SDL_Texture** textures = lss->textures;
 
     SDL_FRect src_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
     SDL_FRect dst_rect = {0, 0, L_TILE_SIZE, L_TILE_SIZE};
@@ -284,8 +320,9 @@ bool Level_isWon(Level* level) {
     return true;
 }
 
-SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
-    LevelSceneState* lss = (LevelSceneState*)sceneState;
+SDL_AppResult LevelScene_event(Scene* scene, SDL_Event* event) {
+    LevelSceneState* lss = (LevelSceneState*)scene->state;
+    
     int levelToLoad = -1;
     Vec2* moveDir = NULL;
     Vec2* shotDir = NULL;
@@ -293,10 +330,8 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
     switch (event->type) {
         case SDL_EVENT_KEY_DOWN:
             switch (event->key.scancode) {
-                case SDL_SCANCODE_ESCAPE: {}
-                    Scene* scene = SDL_calloc(1, sizeof(Scene));
-                    *scene = Menu_scene(lss->renderer, lss->level->levelNum, 0);
-                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = scene});
+                case SDL_SCANCODE_ESCAPE:
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = Menu_scene(lss->renderer, lss->level->levelNum, 0)});
                     return SDL_APP_CONTINUE;
                 case SDL_SCANCODE_UP:
                 case SDL_SCANCODE_W:      moveDir = &V_UP; break;
@@ -331,10 +366,8 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
                 case SDL_GAMEPAD_BUTTON_WEST:       shotDir = &V_LEFT; break;
                 case SDL_GAMEPAD_BUTTON_EAST:       shotDir = &V_RIGHT; break;
                 case SDL_GAMEPAD_BUTTON_BACK:       Level_undo(lss->level, 1); break;
-                case SDL_GAMEPAD_BUTTON_START: {}
-                    Scene* scene = SDL_calloc(1, sizeof(Scene));
-                    *scene = Menu_scene(lss->renderer, lss->level->levelNum, 0);
-                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = scene});
+                case SDL_GAMEPAD_BUTTON_START:
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = Menu_scene(lss->renderer, lss->level->levelNum, 0)});
                     return SDL_APP_CONTINUE;
                 default: break;
             }
@@ -364,19 +397,23 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
-Scene Level_scene(SDL_Renderer* renderer, int level) {
-    LevelSceneState* sceneState = SDL_calloc(1, sizeof(LevelSceneState));
-    // Skip first entry in texture_paths
-    for (int i = 1; i < L_NUM_TX; i++) {
-        sceneState->textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
-    }
-    sceneState->renderer = renderer;
-    sceneState->level = Level_load(level);
-
-    return (Scene){
-        .state = sceneState,
-        .freeState = Level_freeSceneState,
-        .event = Level_event,
-        .draw = Level_draw
+Scene* Level_scene(SDL_Renderer* renderer, int level) {
+    Scene* scene = SDL_calloc(1, sizeof(Scene));
+    *scene = (Scene){
+        .state = SDL_calloc(1, sizeof(LevelSceneState)),
+        .free = LevelScene_free,
+        .event = LevelScene_event,
+        .draw = LevelScene_draw
     };
+
+    *((LevelSceneState*)scene->state) = (LevelSceneState){
+        .renderer = renderer,
+        .level = Level_load(level),
+    };
+
+    for (int i = 1; i < L_NUM_TX; i++) {
+        ((LevelSceneState*)scene->state)->textures[i] = Util_loadTexture(renderer, Level_texturePaths[i]);
+    }
+
+    return scene;
 }

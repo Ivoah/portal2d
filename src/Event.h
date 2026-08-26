@@ -4,6 +4,6 @@
 
 Uint32 EVENT_LOAD_SCENE;
 
-#define E_KEEP_STATE 1
+#define E_NO_FREE 1
 
 bool Event_init();

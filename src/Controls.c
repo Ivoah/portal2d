@@ -15,25 +15,23 @@ const char* messages[] = {
     "U to undo"
 };
 
-void Controls_free(void* sceneState) {
-    SDL_free(sceneState);
+typedef struct {
+    Scene* previousScene;
+} ControlsSceneState;
+
+void ControlsScene_free(Scene* scene) {
+    SDL_free(scene->state);
+    SDL_free(scene);
 }
 
-SDL_AppResult Controls_event(void* sceneState, SDL_Event* event) {
-    MenuSceneState* mss = (MenuSceneState*)sceneState;
+SDL_AppResult ControlsScene_event(Scene* scene, SDL_Event* event) {
+    ControlsSceneState* css = (ControlsSceneState*)scene->state;
 
     switch (event->type) {
         case SDL_EVENT_KEY_DOWN:
             switch (event->key.scancode) {
                 case SDL_SCANCODE_ESCAPE: {}
-                    Scene* newScene = SDL_calloc(1, sizeof(Scene));
-                    *newScene = (Scene){
-                        .state = mss,
-                        .freeState = Menu_free,
-                        .event = Menu_event,
-                        .draw = Menu_draw
-                    };
-                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_KEEP_STATE, .user.data1 = newScene});
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = css->previousScene});
                     break;
                 default: break;
             }
@@ -42,7 +40,7 @@ SDL_AppResult Controls_event(void* sceneState, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
-void Controls_draw(void* sceneState, SDL_Renderer* renderer) {
+void ControlsScene_draw(Scene* scene, SDL_Renderer* renderer) {
     int numMsgs = sizeof(messages)/sizeof(char*);
 
     for (int i = 0; i < numMsgs; i++) {
@@ -50,11 +48,18 @@ void Controls_draw(void* sceneState, SDL_Renderer* renderer) {
     }
 }
 
-Scene Controls_scene(MenuSceneState* mss) {
-    return (Scene){
-        .state = mss,
-        .freeState = Controls_free,
-        .event = Controls_event,
-        .draw = Controls_draw
+Scene* Controls_scene(Scene* previousScene) {
+    Scene* scene = SDL_calloc(1, sizeof(Scene));
+    *scene = (Scene){
+        .state = SDL_calloc(1, sizeof(ControlsSceneState)),
+        .free = ControlsScene_free,
+        .event = ControlsScene_event,
+        .draw = ControlsScene_draw
     };
+
+    *((ControlsSceneState*)scene->state) = (ControlsSceneState){
+        .previousScene = previousScene
+    };
+
+    return scene;
 }

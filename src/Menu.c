@@ -8,15 +8,23 @@
 #include "Controls.h"
 #include "main.h"
 
-void Menu_free(void* sceneState) {
-    MenuSceneState* mss = (MenuSceneState*)sceneState;
+typedef struct {
+    int level;
+    int menuItem;
+    SDL_Texture* logo;
+    SDL_Renderer* renderer;
+} MenuSceneState;
+
+void MenuScene_free(Scene* scene) {
+    MenuSceneState* mss = (MenuSceneState*)scene->state;
     
     SDL_DestroyTexture(mss->logo);
-    SDL_free(sceneState);
+    SDL_free(scene->state);
+    SDL_free(scene);
 }
 
-SDL_AppResult Menu_event(void* sceneState, SDL_Event* event) {
-    MenuSceneState* mss = (MenuSceneState*)sceneState;
+SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
+    MenuSceneState* mss = (MenuSceneState*)scene->state;
     Vec2* dir = &(Vec2){0, 0};
     Scene* newScene;
 
@@ -34,15 +42,11 @@ SDL_AppResult Menu_event(void* sceneState, SDL_Event* event) {
                 case SDL_SCANCODE_D:      dir = &V_RIGHT; break;
                 case SDL_SCANCODE_RETURN:
                     switch (mss->menuItem) {
-                        case 1: {}
-                            newScene = SDL_calloc(1, sizeof(Scene));
-                            *newScene = Level_scene(mss->renderer, mss->level);
-                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = newScene});
+                        case 1:
+                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = Level_scene(mss->renderer, mss->level)});
                             break;
-                        case 2: {}
-                            newScene = SDL_calloc(1, sizeof(Scene));
-                            *newScene = Controls_scene(mss);
-                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_KEEP_STATE, .user.data1 = newScene});
+                        case 2:
+                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_NO_FREE, .user.data1 = Controls_scene(scene)});
                             break;
                         case 3: return SDL_APP_SUCCESS;
                     }
@@ -61,8 +65,8 @@ SDL_AppResult Menu_event(void* sceneState, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
-void Menu_draw(void* sceneState, SDL_Renderer* renderer) {
-    MenuSceneState* mss = (MenuSceneState*)sceneState;
+void MenuScene_draw(Scene* scene, SDL_Renderer* renderer) {
+    MenuSceneState* mss = (MenuSceneState*)scene->state;
 
     char fmtStr[100];
 
@@ -75,18 +79,21 @@ void Menu_draw(void* sceneState, SDL_Renderer* renderer) {
     Text_drawCentered(renderer, mss->menuItem == 3 ? "<Quit>" : "Quit", 350);
 }
 
-Scene Menu_scene(SDL_Renderer* renderer, int level, int menuItem) {
-    MenuSceneState* mss = SDL_calloc(1, sizeof(MenuSceneState));
-
-    mss->renderer = renderer;
-    mss->level = level;
-    mss->menuItem = menuItem;
-    mss->logo = Util_loadTexture(renderer, "logo.png");
-
-    return (Scene){
-        .state = mss,
-        .freeState = Menu_free,
-        .event = Menu_event,
-        .draw = Menu_draw
+Scene* Menu_scene(SDL_Renderer* renderer, int level, int menuItem) {
+    Scene* scene = SDL_calloc(1, sizeof(Scene));
+    *scene = (Scene){
+        .state = SDL_calloc(1, sizeof(MenuSceneState)),
+        .free = MenuScene_free,
+        .event = MenuScene_event,
+        .draw = MenuScene_draw
     };
+
+    *((MenuSceneState*)scene->state) = (MenuSceneState){
+        .renderer = renderer,
+        .level = level,
+        .menuItem = menuItem,
+        .logo = Util_loadTexture(renderer, "logo.png")
+    };
+
+    return scene;
 }

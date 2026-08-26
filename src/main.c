@@ -12,7 +12,7 @@
 typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
-    Scene scene;
+    Scene* scene;
     SDL_Gamepad* gamepad;
 } GameState;
 
@@ -54,11 +54,10 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
             return SDL_APP_CONTINUE;
         default:
             if (event->type == EVENT_LOAD_SCENE) {
-                if (!(event->user.code & E_KEEP_STATE)) gamestate->scene.freeState(gamestate->scene.state);
-                gamestate->scene = *(Scene*)event->user.data1;
-                SDL_free(event->user.data1);
+                if (!(event->user.code & E_NO_FREE)) gamestate->scene->free(gamestate->scene);
+                gamestate->scene = (Scene*)event->user.data1;
                 return SDL_APP_CONTINUE;
-             } else return gamestate->scene.event(gamestate->scene.state, event);
+             } else return gamestate->scene->event(gamestate->scene, event);
     }
 }
 
@@ -74,7 +73,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     SDL_SetRenderDrawColor(gamestate->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(gamestate->renderer);
 
-    gamestate->scene.draw(gamestate->scene.state, gamestate->renderer);
+    gamestate->scene->draw(gamestate->scene, gamestate->renderer);
 
     SDL_RenderPresent(gamestate->renderer);
 
@@ -87,7 +86,7 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result) {
 
     if (gamestate->gamepad != NULL) SDL_CloseGamepad(gamestate->gamepad);
     
-    if (gamestate->scene.state != NULL) gamestate->scene.freeState(gamestate->scene.state);
+    if (gamestate->scene != NULL) gamestate->scene->free(gamestate->scene);
     SDL_free(gamestate);
     
     Text_deinit();

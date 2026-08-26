@@ -4,4 +4,4 @@
 #include "Scene.h"
 #include "Menu.h"
 
-Scene Controls_scene(MenuSceneState*);
+Scene* Controls_scene(Scene*);

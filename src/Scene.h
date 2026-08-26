@@ -1,9 +1,9 @@
 #pragma once
 #include <SDL3/SDL.h>
 
-typedef struct {
+typedef struct Scene {
     void* state;
-    void (*freeState)(void*);
-    SDL_AppResult (*event)(void*, SDL_Event*);
-    void (*draw)(void*, SDL_Renderer*);
+    void (*free)(struct Scene*);
+    SDL_AppResult (*event)(struct Scene*, SDL_Event*);
+    void (*draw)(struct Scene*, SDL_Renderer*);
 } Scene;
