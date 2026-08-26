@@ -9,8 +9,14 @@ const char* messages[] = {
     "Keyboard controls:",
     "WSAD/arrow keys to move",
     "IKJL to shoot portals",
+    "U to undo",
     "R to reset",
-    "U to undo"
+    "",
+    "Gamepad controls:",
+    "D-pad to move",
+    "Face buttons to shoot portals",
+    "Left bumper to undo",
+    "Right bumper to reset"
 };
 
 typedef struct {
