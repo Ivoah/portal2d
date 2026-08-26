@@ -54,7 +54,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
             return SDL_APP_CONTINUE;
         default:
             if (event->type == EVENT_LOAD_SCENE) {
-                gamestate->scene.freeState(gamestate->scene.state);
+                if (!(event->user.code & E_KEEP_STATE)) gamestate->scene.freeState(gamestate->scene.state);
                 gamestate->scene = *(Scene*)event->user.data1;
                 SDL_free(event->user.data1);
                 return SDL_APP_CONTINUE;

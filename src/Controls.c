@@ -15,27 +15,25 @@ const char* messages[] = {
     "U to undo"
 };
 
-typedef struct {
-    SDL_Renderer* renderer;
-    int level;
-    int menuItem;
-} ControlsSceneState;
-
 void Controls_free(void* sceneState) {
-    ControlsSceneState* css = (ControlsSceneState*)sceneState;
     SDL_free(sceneState);
 }
 
 SDL_AppResult Controls_event(void* sceneState, SDL_Event* event) {
-    ControlsSceneState* css = (ControlsSceneState*)sceneState;
+    MenuSceneState* mss = (MenuSceneState*)sceneState;
 
     switch (event->type) {
         case SDL_EVENT_KEY_DOWN:
             switch (event->key.scancode) {
                 case SDL_SCANCODE_ESCAPE: {}
-                    Scene* scene = SDL_calloc(1, sizeof(Scene));
-                    *scene = Menu_scene(css->renderer, css->level, css->menuItem);
-                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = scene});
+                    Scene* newScene = SDL_calloc(1, sizeof(Scene));
+                    *newScene = (Scene){
+                        .state = mss,
+                        .freeState = Menu_free,
+                        .event = Menu_event,
+                        .draw = Menu_draw
+                    };
+                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_KEEP_STATE, .user.data1 = newScene});
                     break;
                 default: break;
             }
@@ -52,15 +50,9 @@ void Controls_draw(void* sceneState, SDL_Renderer* renderer) {
     }
 }
 
-Scene Controls_scene(SDL_Renderer* renderer, int level, int menuItem) {
-    ControlsSceneState* css = SDL_calloc(1, sizeof(ControlsSceneState));
-
-    css->renderer = renderer;
-    css->level = level;
-    css->menuItem = menuItem;
-
+Scene Controls_scene(MenuSceneState* mss) {
     return (Scene){
-        .state = css,
+        .state = mss,
         .freeState = Controls_free,
         .event = Controls_event,
         .draw = Controls_draw

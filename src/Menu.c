@@ -8,17 +8,6 @@
 #include "Controls.h"
 #include "main.h"
 
-typedef struct {
-    int level;
-    int menuItem;
-    SDL_Texture* logo;
-    SDL_Renderer* renderer;
-} MenuSceneState;
-
-void Menu_free(void*);
-SDL_AppResult Menu_event(void*, SDL_Event*);
-void Menu_draw(void*, SDL_Renderer*);
-
 void Menu_free(void* sceneState) {
     MenuSceneState* mss = (MenuSceneState*)sceneState;
     
@@ -52,8 +41,8 @@ SDL_AppResult Menu_event(void* sceneState, SDL_Event* event) {
                             break;
                         case 2: {}
                             newScene = SDL_calloc(1, sizeof(Scene));
-                            *newScene = Controls_scene(mss->renderer, mss->level, mss->menuItem);
-                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = newScene});
+                            *newScene = Controls_scene(mss);
+                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_KEEP_STATE, .user.data1 = newScene});
                             break;
                         case 3: return SDL_APP_SUCCESS;
                     }

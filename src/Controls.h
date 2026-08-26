@@ -2,5 +2,6 @@
 #include <SDL3/SDL.h>
 
 #include "Scene.h"
+#include "Menu.h"
 
-Scene Controls_scene(SDL_Renderer*, int, int);
+Scene Controls_scene(MenuSceneState*);
