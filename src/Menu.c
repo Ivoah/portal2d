@@ -96,8 +96,8 @@ Scene Menu_scene(SDL_Renderer* renderer, int level, int menuItem) {
 
     return (Scene){
         .state = mss,
-        .freeState = &Menu_free,
-        .event = &Menu_event,
-        .draw = &Menu_draw
+        .freeState = Menu_free,
+        .event = Menu_event,
+        .draw = Menu_draw
     };
 }

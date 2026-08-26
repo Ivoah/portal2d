@@ -375,8 +375,8 @@ Scene Level_scene(SDL_Renderer* renderer, int level) {
 
     return (Scene){
         .state = sceneState,
-        .freeState = &Level_freeSceneState,
-        .event = &Level_event,
-        .draw = &Level_draw
+        .freeState = Level_freeSceneState,
+        .event = Level_event,
+        .draw = Level_draw
     };
 }

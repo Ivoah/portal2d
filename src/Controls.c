@@ -61,8 +61,8 @@ Scene Controls_scene(SDL_Renderer* renderer, int level, int menuItem) {
 
     return (Scene){
         .state = css,
-        .freeState = &Controls_free,
-        .event = &Controls_event,
-        .draw = &Controls_draw
+        .freeState = Controls_free,
+        .event = Controls_event,
+        .draw = Controls_draw
     };
 }
