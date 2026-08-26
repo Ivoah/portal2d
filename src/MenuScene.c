@@ -31,6 +31,7 @@ SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
                 case SDL_SCANCODE_RIGHT:
                 case SDL_SCANCODE_D:      dir = &V_RIGHT; break;
                 case SDL_SCANCODE_RETURN:
+                case SDL_SCANCODE_SPACE:
                     switch (mss->menuItem) {
                         case 1:
                             SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = LevelScene_create(mss->renderer, mss->level)});
