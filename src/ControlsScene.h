@@ -2,4 +2,4 @@
 
 #include "Scene.h"
 
-Scene* ControlsScene_create(Scene*);
+Scene* ControlsScene_create();

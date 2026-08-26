@@ -27,8 +27,8 @@ SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
         case I_BACK:  return SDL_APP_SUCCESS;
         case I_CONFIRM:
             switch (mss->menuItem) {
-                case 1: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE,                         .user.data1 = LevelScene_create(mss->renderer, mss->level)}); break;
-                case 2: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_NO_FREE, .user.data1 = ControlsScene_create(scene)}); break;
+                case 1: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_PUSH_SCENE, .user.data1 = LevelScene_create(mss->renderer, mss->level)}); break;
+                case 2: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_PUSH_SCENE, .user.data1 = ControlsScene_create()}); break;
                 case 3: return SDL_APP_SUCCESS;
             }
         default: break;

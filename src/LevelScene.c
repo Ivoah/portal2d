@@ -27,7 +27,7 @@ SDL_AppResult LevelScene_event(Scene* scene, SDL_Event* event) {
         case I_SHOOT_DOWN:  shotDir = &V_DOWN; break;
         case I_SHOOT_LEFT:  shotDir = &V_LEFT; break;
         case I_SHOOT_RIGHT: shotDir = &V_RIGHT; break;
-        case I_BACK:        SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = MenuScene_create(lss->renderer, lss->level->levelNum, 0)}); return SDL_APP_CONTINUE;
+        case I_BACK:        SDL_PushEvent(&(SDL_Event){.user.type = EVENT_POP_SCENE}); return SDL_APP_CONTINUE;
         case I_RESET:       Level_undo(lss->level, -1);
         case I_UNDO:        Level_undo(lss->level, 1);
         default: break;

@@ -55,9 +55,21 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
             }
             return SDL_APP_CONTINUE;
         default:
-            if (event->type == EVENT_LOAD_SCENE) {
-                if (!(event->user.code & E_NO_FREE)) gamestate->scene->free(gamestate->scene);
+            if (event->type == EVENT_REPLACE_SCENE) {
+                Scene* previousScene = gamestate->scene->previousScene;
+                gamestate->scene->free(gamestate->scene);
                 gamestate->scene = (Scene*)event->user.data1;
+                gamestate->scene->previousScene = previousScene;
+                return SDL_APP_CONTINUE;
+             } else if (event->type == EVENT_PUSH_SCENE) {
+                Scene* previousScene = gamestate->scene;
+                gamestate->scene = (Scene*)event->user.data1;
+                gamestate->scene->previousScene = previousScene;
+                return SDL_APP_CONTINUE;
+             } else if (event->type == EVENT_POP_SCENE) {
+                Scene* previousScene = gamestate->scene->previousScene;
+                gamestate->scene->free(gamestate->scene);
+                gamestate->scene = previousScene;
                 return SDL_APP_CONTINUE;
              } else return gamestate->scene->event(gamestate->scene, event);
     }

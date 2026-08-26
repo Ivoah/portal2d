@@ -2,8 +2,8 @@
 
 #include <SDL3/SDL.h>
 
-static Uint32 EVENT_LOAD_SCENE;
-
-#define E_NO_FREE 1
+extern Uint32 EVENT_REPLACE_SCENE;
+extern Uint32 EVENT_PUSH_SCENE;
+extern Uint32 EVENT_POP_SCENE;
 
 bool Event_init();

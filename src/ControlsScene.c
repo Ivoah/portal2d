@@ -19,15 +19,10 @@ const char* messages[] = {
     "Right bumper to reset"
 };
 
-typedef struct {
-    Scene* previousScene;
-} ControlsSceneState;
-
 SDL_AppResult ControlsScene_event(Scene* scene, SDL_Event* event) {
-    ControlsSceneState* css = (ControlsSceneState*)scene->state;
 
     switch (Input_fromEvent(event, true)) {
-        case I_BACK: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = css->previousScene}); break;
+        case I_BACK: SDL_PushEvent(&(SDL_Event){.type = EVENT_POP_SCENE}); break;
         default: break;
     }
 
@@ -43,21 +38,16 @@ void ControlsScene_draw(Scene* scene, SDL_Renderer* renderer) {
 }
 
 void ControlsScene_free(Scene* scene) {
-    SDL_free(scene->state);
     SDL_free(scene);
 }
 
-Scene* ControlsScene_create(Scene* previousScene) {
+Scene* ControlsScene_create() {
     Scene* scene = SDL_calloc(1, sizeof(Scene));
     *scene = (Scene){
-        .state = SDL_calloc(1, sizeof(ControlsSceneState)),
+        .state = NULL,
         .event = ControlsScene_event,
         .draw = ControlsScene_draw,
         .free = ControlsScene_free
-    };
-
-    *((ControlsSceneState*)scene->state) = (ControlsSceneState){
-        .previousScene = previousScene
     };
 
     return scene;
