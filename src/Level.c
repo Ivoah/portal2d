@@ -3,6 +3,7 @@
 #include "Util.h"
 #include "Text.h"
 #include "Scene.h"
+#include "Event.h"
 
 const char* Level_texturePaths[] = {
     NULL,
@@ -172,7 +173,7 @@ void Level_draw(void* sceneState, SDL_Renderer* renderer) {
     SDL_RenderTexture(renderer, textures[L_PLAYER], NULL, &dst_rect);
 
     char fmtStr[100];
-    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Level: %d", level->levelNum);
+    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Level: %d", level->levelNum + 1);
     Text_draw(renderer, fmtStr, (Vec2){0, 0});
 
     SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Moves: %d", level->state->moves);
@@ -293,7 +294,7 @@ SDL_AppResult Level_event(void* sceneState, SDL_Event* event) {
     switch (event->type) {
         case SDL_EVENT_KEY_DOWN:
             switch (event->key.scancode) {
-                case SDL_SCANCODE_ESCAPE: return SDL_APP_SUCCESS;
+                case SDL_SCANCODE_ESCAPE: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_MENU, .user.code = lss->level->levelNum}); return SDL_APP_CONTINUE;
                 case SDL_SCANCODE_UP:
                 case SDL_SCANCODE_W:      moveDir = &V_UP; break;
                 case SDL_SCANCODE_DOWN:

@@ -34,3 +34,8 @@ void Util_drawWobbly(SDL_Renderer* renderer, SDL_Texture* texture, Vec2 pos) {
 
     SDL_RenderTexture(renderer, texture, &src_rect, &dst_rect);
 }
+
+void Util_wrap(int* p, int size) {
+    if (*p < 0) *p = size - 1;
+    else if (*p >= size) *p = 0;
+}

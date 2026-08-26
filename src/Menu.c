@@ -3,10 +3,11 @@
 #include "Scene.h"
 #include "Save.h"
 #include "Util.h"
+#include "Event.h"
 #include "main.h"
 
 typedef struct {
-    Uint8 level;
+    int level;
     int menuItem;
     SDL_Texture* logo;
     SDL_Texture* selector;
@@ -21,6 +22,37 @@ void Menu_free(void* sceneState) {
 }
 
 SDL_AppResult Menu_event(void* sceneState, SDL_Event* event) {
+    MenuSceneState* mss = (MenuSceneState*)sceneState;
+    Vec2* dir = &(Vec2){0, 0};
+
+    switch (event->type) {
+        case SDL_EVENT_KEY_DOWN:
+            switch (event->key.scancode) {
+                case SDL_SCANCODE_UP:
+                case SDL_SCANCODE_W:      dir = &V_UP; break;
+                case SDL_SCANCODE_DOWN:
+                case SDL_SCANCODE_S:      dir = &V_DOWN; break;
+                case SDL_SCANCODE_LEFT:
+                case SDL_SCANCODE_A:      dir = &V_LEFT; break;
+                case SDL_SCANCODE_RIGHT:
+                case SDL_SCANCODE_D:      dir = &V_RIGHT; break;
+                case SDL_SCANCODE_RETURN:
+                    switch (mss->menuItem) {
+                        case 1: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_LEVEL, .user.code = mss->level}); break;
+                        case 2: return SDL_APP_SUCCESS;
+                    }
+                default: break;
+            }
+    }
+
+    mss->menuItem += dir->y;
+    Util_wrap(&mss->menuItem, 3);
+
+    if (mss->menuItem == 0) {
+        mss->level += dir->x;
+        Util_wrap(&mss->level, 10);
+    }
+
     return SDL_APP_CONTINUE;
 }
 
@@ -31,13 +63,16 @@ void Menu_draw(void* sceneState, SDL_Renderer* renderer) {
 
     Util_drawWobbly(renderer, mss->logo, (Vec2){WINDOW_WIDTH/2 - mss->logo->w/2, 100});
 
-    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Level <%02d>", mss->level);
+    SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), mss->menuItem == 0 ? "<Level %d>" : "Level %d", mss->level + 1);
     Text_drawCentered(renderer, fmtStr, 200);
+    Text_drawCentered(renderer, mss->menuItem == 1 ? "<Play>" : "Play", 250);
+    Text_drawCentered(renderer, mss->menuItem == 2 ? "<Quit>" : "Quit", 300);
 }
 
-Scene Menu_scene(SDL_Renderer* renderer) {
+Scene Menu_scene(SDL_Renderer* renderer, int level) {
     MenuSceneState* mss = SDL_calloc(1, sizeof(MenuSceneState));
 
+    mss->level = level;
     mss->logo = Util_loadTexture(renderer, "logo.png");
     mss->selector = Util_loadTexture(renderer, "selector.png");
 

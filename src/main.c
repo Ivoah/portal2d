@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "Level.h"
 #include "Menu.h"
+#include "Event.h"
 #include "Text.h"
 
 typedef struct {
@@ -18,6 +19,7 @@ typedef struct {
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     *appstate = SDL_calloc(1, sizeof(GameState));
     GameState* gamestate = (GameState*)(*appstate);
+    SDL_zero(*gamestate);
 
     SDL_SetAppMetadata("Portalban", "0.1", "net.ivoah.portalban");
 
@@ -34,9 +36,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if (!SDL_SetRenderVSync(gamestate->renderer, 1)) SDL_Log("Could not set vsync: %s", SDL_GetError());
 
     if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
+    if (!Event_init()) return SDL_APP_FAILURE;
 
-    // gamestate->scene = Menu_scene(gamestate->renderer);
-    gamestate->scene = Level_scene(gamestate->renderer, 0);
+    gamestate->scene = Menu_scene(gamestate->renderer, 0);
 
     return SDL_APP_CONTINUE;
 }
@@ -47,12 +49,19 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     switch (event->type) {
         case SDL_EVENT_QUIT:
             return SDL_APP_SUCCESS;
-
         case SDL_EVENT_GAMEPAD_ADDED:
             if (gamestate->gamepad == NULL) gamestate->gamepad = SDL_OpenGamepad(event->gbutton.which);
             return SDL_APP_CONTINUE;
         default:
-            return gamestate->scene.event(gamestate->scene.state, event);
+            if (event->type == EVENT_LOAD_LEVEL) {
+                gamestate->scene.freeState(gamestate->scene.state);
+                gamestate->scene = Level_scene(gamestate->renderer, event->user.code);
+                return SDL_APP_CONTINUE;
+            } else if (event->type == EVENT_LOAD_MENU) {
+                gamestate->scene.freeState(gamestate->scene.state);
+                gamestate->scene = Menu_scene(gamestate->renderer, event->user.code);
+                return SDL_APP_CONTINUE;
+             } else return gamestate->scene.event(gamestate->scene.state, event);
     }
 }
 
@@ -81,7 +90,7 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result) {
 
     if (gamestate->gamepad != NULL) SDL_CloseGamepad(gamestate->gamepad);
     
-    gamestate->scene.freeState(gamestate->scene.state);
+    if (gamestate->scene.state != NULL) gamestate->scene.freeState(gamestate->scene.state);
     SDL_free(gamestate);
     
     Text_deinit();
