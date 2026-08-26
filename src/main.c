@@ -33,10 +33,10 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     SDL_SetRenderLogicalPresentation(gamestate->renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     if (!SDL_SetRenderVSync(gamestate->renderer, 1)) SDL_Log("Could not set vsync: %s", SDL_GetError());
 
+    if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
+
     // gamestate->scene = Menu_scene(gamestate->renderer);
     gamestate->scene = Level_scene(gamestate->renderer, 0);
-
-    if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
 
     return SDL_APP_CONTINUE;
 }

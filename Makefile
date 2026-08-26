@@ -11,10 +11,13 @@ VITA_TITLEID := IVOAH0001
 LIBS := sdl3
 
 EXE := portalban
+
 CFLAGS += $(shell pkg-config --cflags $(LIBS)) -g -fsanitize=address -fno-omit-frame-pointer
 LDFLAGS += $(shell pkg-config --libs $(LIBS)) -g -fsanitize=address -fno-omit-frame-pointer
+
 VITA_CFLAGS += -Wl,-q -std=gnu17 $(shell arm-vita-eabi-pkg-config --cflags $(LIBS))
 VITA_LDFLAGS += -Wl,-q -std=gnu17 -Wl,-z,nocopyreloc $(shell arm-vita-eabi-pkg-config --libs $(LIBS))
+
 WEB_CFLAGS += --use-port=sdl3
 WEB_LDFLAGS += --use-port=sdl3
 
