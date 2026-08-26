@@ -266,8 +266,8 @@ void Level_draw(SDL_Renderer* renderer, SDL_Texture* tiles, Level* level) {
 
     char fmtStr[100];
     SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Level: %d", level->levelNum + 1);
-    Text_draw(renderer, fmtStr, (Vec2){0, 0});
+    Text_draw(renderer, fmtStr, (Vec2){T_SPACING, 0});
 
     SDL_snprintf(fmtStr, sizeof(fmtStr)/sizeof(char), "Moves: %d", level->state->moves);
-    Text_draw(renderer, fmtStr, (Vec2){0, T_SIZE});
+    Text_draw(renderer, fmtStr, (Vec2){T_SPACING, T_SIZE});
 }
