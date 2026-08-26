@@ -2,6 +2,7 @@
 #include "Text.h"
 #include "Util.h"
 #include "Event.h"
+#include "Input.h"
 #include "LevelScene.h"
 #include "ControlsScene.h"
 #include "main.h"
@@ -18,31 +19,19 @@ SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
     Vec2* dir = &(Vec2){0, 0};
     Scene* newScene;
 
-    switch (event->type) {
-        case SDL_EVENT_KEY_DOWN:
-            switch (event->key.scancode) {
-                case SDL_SCANCODE_ESCAPE: return SDL_APP_SUCCESS;
-                case SDL_SCANCODE_UP:
-                case SDL_SCANCODE_W:      dir = &V_UP; break;
-                case SDL_SCANCODE_DOWN:
-                case SDL_SCANCODE_S:      dir = &V_DOWN; break;
-                case SDL_SCANCODE_LEFT:
-                case SDL_SCANCODE_A:      dir = &V_LEFT; break;
-                case SDL_SCANCODE_RIGHT:
-                case SDL_SCANCODE_D:      dir = &V_RIGHT; break;
-                case SDL_SCANCODE_RETURN:
-                case SDL_SCANCODE_SPACE:
-                    switch (mss->menuItem) {
-                        case 1:
-                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = LevelScene_create(mss->renderer, mss->level)});
-                            break;
-                        case 2:
-                            SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_NO_FREE, .user.data1 = ControlsScene_create(scene)});
-                            break;
-                        case 3: return SDL_APP_SUCCESS;
-                    }
-                default: break;
+    switch (Input_fromEvent(event, true)) {
+        case I_UP:    dir = &V_UP; break;
+        case I_DOWN:  dir = &V_DOWN; break;
+        case I_LEFT:  dir = &V_LEFT; break;
+        case I_RIGHT: dir = &V_RIGHT; break;
+        case I_BACK:  return SDL_APP_SUCCESS;
+        case I_CONFIRM:
+            switch (mss->menuItem) {
+                case 1: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE,                         .user.data1 = LevelScene_create(mss->renderer, mss->level)}); break;
+                case 2: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.code = E_NO_FREE, .user.data1 = ControlsScene_create(scene)}); break;
+                case 3: return SDL_APP_SUCCESS;
             }
+        default: break;
     }
 
     mss->menuItem += dir->y;

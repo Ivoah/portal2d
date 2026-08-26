@@ -2,6 +2,7 @@
 #include "Text.h"
 #include "Save.h"
 #include "Event.h"
+#include "Input.h"
 #include "main.h"
 
 const char* messages[] = {
@@ -19,14 +20,9 @@ typedef struct {
 SDL_AppResult ControlsScene_event(Scene* scene, SDL_Event* event) {
     ControlsSceneState* css = (ControlsSceneState*)scene->state;
 
-    switch (event->type) {
-        case SDL_EVENT_KEY_DOWN:
-            switch (event->key.scancode) {
-                case SDL_SCANCODE_ESCAPE: {}
-                    SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = css->previousScene});
-                    break;
-                default: break;
-            }
+    switch (Input_fromEvent(event, true)) {
+        case I_BACK: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_LOAD_SCENE, .user.data1 = css->previousScene}); break;
+        default: break;
     }
 
     return SDL_APP_CONTINUE;
