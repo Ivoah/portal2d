@@ -22,14 +22,14 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     GameState* gamestate = (GameState*)(*appstate);
     SDL_zero(*gamestate);
 
-    SDL_SetAppMetadata("Portalban", "0.1", "net.ivoah.portalban");
+    SDL_SetAppMetadata("Portal2D", "0.1", "net.ivoah.portal2d");
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
         SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("Portalban", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &gamestate->window, &gamestate->renderer)) {
+    if (!SDL_CreateWindowAndRenderer("Portal2D", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &gamestate->window, &gamestate->renderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -51,6 +51,11 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     GameState* gamestate = (GameState*)appstate;
+
+    if (gamestate->scene == NULL) {
+        SDL_Log("NULL scene, quitting");
+        return SDL_APP_FAILURE;
+    }
 
     switch (event->type) {
         case SDL_EVENT_QUIT:
@@ -86,12 +91,19 @@ Uint64 lastTime = 0, currentTime = 0;
 SDL_AppResult SDL_AppIterate(void* appstate) {
     GameState* gamestate = (GameState*)appstate;
 
+    if (gamestate->scene == NULL) {
+        SDL_Log("NULL scene, quitting");
+        return SDL_APP_FAILURE;
+    }
+
     currentTime = SDL_GetTicks();
     Uint64 delta = currentTime - lastTime;
     lastTime = currentTime;
 
+    gamestate->scene->update(gamestate->scene, delta);
+
     // Clear screen
-    SDL_SetRenderDrawColor(gamestate->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(gamestate->renderer, gamestate->scene->clearColor.r, gamestate->scene->clearColor.g, gamestate->scene->clearColor.b, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(gamestate->renderer);
 
     gamestate->scene->draw(gamestate->scene, gamestate->renderer);

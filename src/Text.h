@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include "Vec2.h"
+#include "Vec.h"
 
 #define T_SIZE 32
 #define T_SPACING 8

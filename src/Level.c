@@ -17,7 +17,7 @@ Level* Level_load(int num) {
     int x = 0, y = 0;
     for (int i = 0; mapData[i] != 0; i++) {
         if ((x >= L_MAX_WIDTH || y >= L_MAX_HEIGHT) && mapData[i] != '\n') {
-            SDL_Log("Level too large, max width/height is %dx%d", L_MAX_WIDTH, L_MAX_HEIGHT);
+            SDL_Log("Level too large, max width/height is %dx%d, got %c at %dx%d", L_MAX_WIDTH, L_MAX_HEIGHT, mapData[i], x, y);
                 Level_free(newLevel);
                 SDL_free(mapData);
                 return NULL;
@@ -28,6 +28,14 @@ Level* Level_load(int num) {
                 break;
             case '@':
                 newLevel->tiles[y][x] = S_NPWALL;
+                break;
+            case 'p':
+                newLevel->entities[newLevel->nEntities] = (Entity){
+                    .sprite = S_BENDY,
+                    .pos = (Vec2){x*S_SIZE, y*S_SIZE},
+                    .hitbox = (Vec4){.x = 7, .y = 4, .w = 14, .h = 24}
+                };
+                newLevel->nEntities++;
                 break;
             case '\n':
                 newLevel->width = SDL_max(newLevel->width, x);
@@ -56,6 +64,12 @@ void Level_free(Level* level) {
     SDL_free(level);
 }
 
+void Level_update(Level* level, int delta) {
+    for (int i = 0; i < level->nEntities; i++) {
+        Entity_update(&level->entities[i], delta);
+    }
+}
+
 void Level_draw(SDL_Renderer* renderer, SDL_Texture* tx, Level* level) {
     Vec2 dst = {0, 0};
 
@@ -71,6 +85,11 @@ void Level_draw(SDL_Renderer* renderer, SDL_Texture* tx, Level* level) {
                 Sprite_draw(renderer, tx, tile, &dst);
             }
         }
+    }
+
+    // Draw entities
+    for (int i = 0; i < level->nEntities; i++) {
+        Entity_draw(renderer, tx, &level->entities[i]);
     }
 
     // // Draw portals

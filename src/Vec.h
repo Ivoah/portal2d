@@ -7,6 +7,13 @@ typedef struct {
     int y;
 } Vec2;
 
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} Vec4;
+
 #define V_UP (Vec2){0, -1}
 #define V_DOWN (Vec2){0, 1}
 #define V_LEFT (Vec2){-1, 0}

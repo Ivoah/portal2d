@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include "Vec2.h"
+#include "Vec.h"
 
 #define S_SIZE 32
 

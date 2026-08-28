@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include "Vec2.h"
+#include "Vec.h"
 
 #define U_WOBBLE_SPEED 500
 
