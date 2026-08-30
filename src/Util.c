@@ -26,10 +26,27 @@ SDL_Texture* Util_loadTexture(SDL_Renderer* renderer, const char* path) {
     return texture;
 }
 
+Vec4 Util_measureSprite(SDL_Surface* surface, Vec4 bounds) {
+    int minX = bounds.w, maxX = 0, minY = bounds.h, maxY = 0;
+    for (int x = 0; x < bounds.w; x++) {
+        for (int y = 0; y < bounds.h; y++) {
+            Uint8 a;
+            SDL_ReadSurfacePixel(surface, bounds.x + x, bounds.y + y, NULL, NULL, NULL, &a);
+            if (a > 0) {
+                minX = SDL_min(minX, x);
+                maxX = SDL_max(maxX, x);
+                minY = SDL_min(minY, y);
+                maxY = SDL_max(maxY, y);
+            }
+        }
+    }
+    return (Vec4){minX, minY, maxX - minX + 1, maxY - minY + 1};
+}
+
 void Util_drawWobbly(SDL_Renderer* renderer, SDL_Texture* texture, Vec2 pos) {
     int height = texture->h/2;
 
-    SDL_FRect src_rect = {0, height*((SDL_GetTicks()/U_WOBBLE_SPEED)%(texture->h/height)), texture->w, height};
+    SDL_FRect src_rect = {0, height*((SDL_GetTicks()/U_WOBBLE_SPEED)%2), texture->w, height};
     SDL_FRect dst_rect = {pos.x, pos.y, texture->w, height};
 
     SDL_RenderTexture(renderer, texture, &src_rect, &dst_rect);

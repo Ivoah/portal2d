@@ -6,36 +6,17 @@
 #define T_NUM_CHARS ('}' - ' ')
 
 static SDL_Texture* font = NULL;
-static int starts[T_NUM_CHARS][2];
-static int widths[T_NUM_CHARS][2];
-
-void Text_metrics(SDL_Surface* surface, int i, int start[2], int width[2]) {
-    // Special case for space character
-    if (i == 0) {
-        start[0] = start[1] = 0;
-        width[0] = width[1] = T_SPACING;
-        return;
-    }
-
-    start[0] = start[1] = T_SIZE;
-    width[0] = width[1] = 0;
-    for (int x = 0; x < T_SIZE; x++) {
-        for (int y = 0; y < T_SIZE; y++) {
-            for (int j = 0; j < 2; j++) {
-                Uint8 a;
-                SDL_ReadSurfacePixel(surface, i*T_SIZE + x, j*T_SIZE + y, NULL, NULL, NULL, &a);
-                if (a > 0) {
-                    start[j] = SDL_min(start[j], x);
-                    width[j] = SDL_max(width[j], x + 1 - start[j]);
-                }
-            }
-        }
-    }
-}
+static Vec4 Text_hitboxes[T_NUM_CHARS][2];
 
 bool Text_init(SDL_Renderer* renderer) {
     SDL_Surface* fontSurface = Util_loadSurface("font.png");
-    for (int i = 0; i < T_NUM_CHARS; i++) Text_metrics(fontSurface, i, starts[i], widths[i]);
+
+    Text_hitboxes[0][0] = (Vec4){0, 0, T_SPACING, T_SIZE};
+    Text_hitboxes[0][1] = (Vec4){0, 0, T_SPACING, T_SIZE};
+    for (int i = 1; i < T_NUM_CHARS; i++) {
+        Text_hitboxes[i][0] = Util_measureSprite(fontSurface, (Vec4){i*T_SIZE, 0, T_SIZE, T_SIZE});
+        Text_hitboxes[i][1] = Util_measureSprite(fontSurface, (Vec4){i*T_SIZE, T_SIZE, T_SIZE, T_SIZE});
+    }
 
     font = SDL_CreateTextureFromSurface(renderer, fontSurface);
     SDL_DestroySurface(fontSurface);
@@ -54,11 +35,11 @@ void Text_draw(SDL_Renderer* renderer, const char* str, Vec2 pos) {
 
     for (const char* c = str; *c != '\0'; c += sizeof(char)) {
         int i = *c - ' ';
-        src_rect.x = i*T_SIZE + starts[i][j];
-        src_rect.w = widths[i][j];
-        dst_rect.w = widths[i][j];
+        src_rect.x = i*T_SIZE + Text_hitboxes[i][j].x;
+        src_rect.w = Text_hitboxes[i][j].w;
+        dst_rect.w = Text_hitboxes[i][j].w;
         SDL_RenderTexture(renderer, font, &src_rect, &dst_rect);
-        dst_rect.x += widths[i][j] + T_SPACING;
+        dst_rect.x += Text_hitboxes[i][j].w + T_SPACING;
     }
 }
 
@@ -71,7 +52,7 @@ int Text_getWidth(const char* str) {
 
     int w = 0;
     for (const char* c = str; *c != '\0'; c += sizeof(char)) {
-        w += widths[*c - ' '][j] + T_SPACING;
+        w += Text_hitboxes[*c - ' '][j].w + T_SPACING;
     }
     return w - T_SPACING;
 }
