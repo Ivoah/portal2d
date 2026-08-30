@@ -43,8 +43,8 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
     if (!Event_init()) return SDL_APP_FAILURE;
 
-    // gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
-    gamestate->scene = LevelScene_create(gamestate->renderer, 0);
+    gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
+    // gamestate->scene = LevelScene_create(gamestate->renderer, 0);
 
     return SDL_APP_CONTINUE;
 }
@@ -100,7 +100,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     Uint64 delta = currentTime - lastTime;
     lastTime = currentTime;
 
-    gamestate->scene->update(gamestate->scene, delta);
+    if (gamestate->scene->update != NULL) gamestate->scene->update(gamestate->scene, delta);
 
     // Clear screen
     SDL_SetRenderDrawColor(gamestate->renderer, gamestate->scene->clearColor.r, gamestate->scene->clearColor.g, gamestate->scene->clearColor.b, SDL_ALPHA_OPAQUE);

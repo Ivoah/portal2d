@@ -14,5 +14,3 @@ typedef struct Scene {
     void (*draw)(struct Scene*, SDL_Renderer*);
     void (*free)(struct Scene*);
 } Scene;
-
-void Scene_emptyUpdate(Scene*, int);

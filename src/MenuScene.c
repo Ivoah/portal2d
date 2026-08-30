@@ -74,7 +74,7 @@ Scene* MenuScene_create(SDL_Renderer* renderer, int level, int menuItem) {
     *scene = (Scene){
         .state = SDL_calloc(1, sizeof(MenuSceneState)),
         .event = MenuScene_event,
-        .update = Scene_emptyUpdate,
+        .update = NULL,
         .draw = MenuScene_draw,
         .free = MenuScene_free
     };

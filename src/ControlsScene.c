@@ -47,7 +47,7 @@ Scene* ControlsScene_create() {
     *scene = (Scene){
         .state = NULL,
         .event = ControlsScene_event,
-        .update = Scene_emptyUpdate,
+        .update = NULL,
         .draw = ControlsScene_draw,
         .free = ControlsScene_free
     };
