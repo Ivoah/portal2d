@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include "Vec.h"
-#include "Sprite.h"
+#include "Sprites.h"
 
 typedef struct {
     SpriteId sprite;
@@ -11,4 +11,5 @@ typedef struct {
 } Entity;
 
 void Entity_update(Entity*, int);
-void Entity_draw(SDL_Renderer*, SDL_Texture*, Entity*);
+void Entity_draw(SDL_Renderer*, Entity*);
+Entity Entity_create(SpriteId, Vec2);

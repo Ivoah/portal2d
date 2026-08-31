@@ -7,6 +7,7 @@
 #include "Text.h"
 #include "Util.h"
 #include "Event.h"
+#include "Sprites.h"
 #include "MenuScene.h"
 #include "LevelScene.h"
 
@@ -40,11 +41,12 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     SDL_SetWindowIcon(gamestate->window, icon);
     SDL_DestroySurface(icon);
 
+    if (!Sprites_init(gamestate->renderer, "tiles.png")) return SDL_APP_FAILURE; 
     if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
     if (!Event_init()) return SDL_APP_FAILURE;
 
-    gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
-    // gamestate->scene = LevelScene_create(gamestate->renderer, 0);
+    // gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
+    gamestate->scene = LevelScene_create(0);
 
     return SDL_APP_CONTINUE;
 }

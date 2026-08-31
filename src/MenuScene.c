@@ -13,7 +13,6 @@ typedef struct {
     int level;
     int menuItem;
     SDL_Texture* logo;
-    SDL_Renderer* renderer;
 } MenuSceneState;
 
 SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
@@ -29,7 +28,7 @@ SDL_AppResult MenuScene_event(Scene* scene, SDL_Event* event) {
         case I_BACK:  return SDL_APP_SUCCESS;
         case I_CONFIRM:
             switch (mss->menuItem) {
-                case 1: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_PUSH_SCENE, .user.data1 = LevelScene_create(mss->renderer, mss->level)}); break;
+                case 1: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_PUSH_SCENE, .user.data1 = LevelScene_create(mss->level)}); break;
                 case 2: SDL_PushEvent(&(SDL_Event){.user.type = EVENT_PUSH_SCENE, .user.data1 = ControlsScene_create()}); break;
                 case 3: return SDL_APP_SUCCESS;
             }
@@ -80,7 +79,6 @@ Scene* MenuScene_create(SDL_Renderer* renderer, int level, int menuItem) {
     };
 
     *((MenuSceneState*)scene->state) = (MenuSceneState){
-        .renderer = renderer,
         .level = level,
         .menuItem = menuItem,
         .logo = Util_loadTexture(renderer, "logo.png")

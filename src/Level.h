@@ -18,4 +18,4 @@ typedef struct {
 Level* Level_load(int);
 void Level_free(Level*);
 void Level_update(Level*, int);
-void Level_draw(SDL_Renderer*, SDL_Texture*, Level*);
+void Level_draw(SDL_Renderer*, Level*);

@@ -20,5 +20,9 @@ typedef enum {
     S_NUM_TX
 } SpriteId;
 
-void Sprite_draw(SDL_Renderer*, SDL_Texture*, SpriteId, const Vec2*);
-void Sprite_drawPortal(SDL_Renderer*, SDL_Texture*, bool, const Vec2*, double);
+extern SDL_Texture* Sprites_texture;
+
+bool Sprites_init(SDL_Renderer*, const char*);
+Vec4 Sprites_hitbox(SpriteId);
+void Sprites_draw(SDL_Renderer*, SpriteId, const Vec2*);
+void Sprites_drawPortal(SDL_Renderer*, bool, const Vec2*, double);

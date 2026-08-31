@@ -1,6 +1,6 @@
 #include "Level.h"
 
-#include "Sprite.h"
+#include "Sprites.h"
 
 Level* Level_load(int num) {
     char* levelPath = NULL;
@@ -30,11 +30,7 @@ Level* Level_load(int num) {
                 newLevel->tiles[y][x] = S_NPWALL;
                 break;
             case 'p':
-                newLevel->entities[newLevel->nEntities] = (Entity){
-                    .sprite = S_BENDY,
-                    .pos = (Vec2){x*S_SIZE, y*S_SIZE},
-                    .hitbox = (Vec4){.x = 7, .y = 4, .w = 14, .h = 24}
-                };
+                newLevel->entities[newLevel->nEntities] = Entity_create(S_BENDY, (Vec2){x*S_SIZE + S_SIZE/2, y*S_SIZE + S_SIZE/2});
                 newLevel->nEntities++;
                 break;
             case '\n':
@@ -70,26 +66,25 @@ void Level_update(Level* level, int delta) {
     }
 }
 
-void Level_draw(SDL_Renderer* renderer, SDL_Texture* tx, Level* level) {
-    Vec2 dst = {0, 0};
-
+void Level_draw(SDL_Renderer* renderer, Level* level) {
     // const Vec2 offset = {WINDOW_WIDTH/2 - level->width*L_TILE_SIZE/2, WINDOW_HEIGHT/2 - level->height*L_TILE_SIZE/2};
-
+    
     // Draw map
+    Vec2 dst = {0, 0};
     for (int i = 0; i < level->height; i++) {
         for (int j = 0; j < level->width; j++) {
             int tile = level->tiles[i][j];
             if (tile > 0) {
                 dst.x = j*S_SIZE;
                 dst.y = i*S_SIZE;
-                Sprite_draw(renderer, tx, tile, &dst);
+                Sprites_draw(renderer, tile, &dst);
             }
         }
     }
 
     // Draw entities
     for (int i = 0; i < level->nEntities; i++) {
-        Entity_draw(renderer, tx, &level->entities[i]);
+        Entity_draw(renderer, &level->entities[i]);
     }
 
     // // Draw portals
