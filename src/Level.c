@@ -1,4 +1,5 @@
 #include "Level.h"
+#include "Entity.h"
 
 #include "Sprites.h"
 
@@ -31,6 +32,7 @@ Level* Level_load(int num) {
                 break;
             case 'p':
                 newLevel->entities[newLevel->nEntities] = Entity_create(S_BENDY, (Vec2){x*S_SIZE + S_SIZE/2, y*S_SIZE + S_SIZE/2});
+                newLevel->player = &newLevel->entities[newLevel->nEntities];
                 newLevel->nEntities++;
                 break;
             case '\n':
@@ -60,9 +62,23 @@ void Level_free(Level* level) {
     SDL_free(level);
 }
 
+SpriteId Level_getTile(Level* level, Vec2 pos) {
+    if (pos.x < 0 || pos.y < 0 || pos.x >= level->width*S_SIZE || pos.y >= level->height*S_SIZE) return S_UNKNOWN;
+    return level->tiles[pos.y/S_SIZE][pos.x/S_SIZE];
+}
+
 void Level_update(Level* level, int delta) {
+    const bool* key_states = SDL_GetKeyboardState(NULL);
+    Vec2 v = {0, 0};
+    if (key_states[SDL_SCANCODE_W]) v.y -= 1; 
+    if (key_states[SDL_SCANCODE_S]) v.y += 1;
+    if (key_states[SDL_SCANCODE_A]) v.x -= 1; 
+    if (key_states[SDL_SCANCODE_D]) v.x += 1;
+
+    level->player->velocity = v;
+
     for (int i = 0; i < level->nEntities; i++) {
-        Entity_update(&level->entities[i], delta);
+        Entity_update(&level->entities[i], level, delta);
     }
 }
 

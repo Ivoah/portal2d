@@ -1,7 +1,19 @@
 #include "Entity.h"
+#include "Level.h"
 
-void Entity_update(Entity* e, int dt) {
-    // e->pos.y -= 1;
+#define E_GRAVITY 1
+
+void Entity_update(Entity* e, Level* level, int dt) {
+    Vec2 newPos = Vec2_add(&e->pos, &e->velocity);
+    int w2 = e->hitbox.w/2;
+    int h2 = e->hitbox.h/2;
+    if (
+        Level_getTile(level, (Vec2){newPos.x - w2, newPos.y - h2}) != S_AIR ||
+        Level_getTile(level, (Vec2){newPos.x + w2, newPos.y - h2}) != S_AIR ||
+        Level_getTile(level, (Vec2){newPos.x + w2, newPos.y + h2}) != S_AIR ||
+        Level_getTile(level, (Vec2){newPos.x - w2, newPos.y + h2}) != S_AIR
+    ) return;
+    e->pos = newPos;
 }
 
 void Entity_draw(SDL_Renderer* renderer, Entity* e) {
@@ -22,6 +34,7 @@ Entity Entity_create(SpriteId id, Vec2 pos) {
     return (Entity){
         .sprite = id,
         .pos = pos,
+        .velocity = (Vec2){0, 0},
         .hitbox = Sprites_hitbox(id)
     };
 }

@@ -6,6 +6,7 @@
 #define S_SIZE 32
 
 typedef enum {
+    S_UNKNOWN = -1,
     S_AIR,
     S_BUTTON,
     S_CUBE,

@@ -3,13 +3,9 @@
 #include <SDL3/SDL.h>
 #include "Vec.h"
 #include "Sprites.h"
+#include "EntityStruct.h"
+#include "Level.h"
 
-typedef struct {
-    SpriteId sprite;
-    Vec2 pos;
-    Vec4 hitbox;
-} Entity;
-
-void Entity_update(Entity*, int);
+void Entity_update(Entity*, Level*, int);
 void Entity_draw(SDL_Renderer*, Entity*);
 Entity Entity_create(SpriteId, Vec2);

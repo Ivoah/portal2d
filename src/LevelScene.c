@@ -11,6 +11,7 @@ typedef struct {
 
 SDL_AppResult LevelScene_event(Scene* scene, SDL_Event* event) {
     LevelSceneState* lss = (LevelSceneState*)scene->state;
+
     
     switch (Input_fromEvent(event, false)) {
         case I_UP:          break;
