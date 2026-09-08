@@ -1,4 +1,7 @@
 .DS_Store
 .vscode/
+.bsp/
+.metals/
+.scala-build/
 *_build/
 portal2d*
