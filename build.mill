@@ -1,0 +1,75 @@
+package build
+import mill.*, mill.api.*
+
+trait CModule extends Module {
+  import java.nio.file.attribute.FileTime
+  import scala.math.Ordered.orderingToOrdered
+
+  def executableName: T[String]
+  def bundleName: T[String] = ""
+  def pkgConfigLibs: T[Seq[String]] = Seq()
+
+  def CC: T[String] = "cc"
+
+  def CFLAGS: T[Seq[String]] = os.proc("pkg-config", "--cflags", pkgConfigLibs()).call().out.trim().split(" ").toSeq
+  def LDFLAGS: T[Seq[String]] = os.proc("pkg-config", "--libs", pkgConfigLibs()).call().out.trim().split(" ").toSeq
+
+  def sources = Task.Source("src")
+  def resources = Task.Sources("levels", "sprites")
+
+  def allSources = Task {
+    os.walk(sources().path)
+      .filter(_.ext == "c")
+      .map(PathRef(_))
+  }
+
+  def compile = Task(persistent = true) {
+    def headerDeps(f: os.Path): Set[os.Path] = {
+      os.read.lines(f).map(_.strip).collect {
+        case s"""#include "$h"""" => headerDeps(f / ".." / h)
+      }.flatten.toSet + f
+    }
+
+    sources() // Depend on sources task so we can read header files
+    for (source <- allSources()) yield {
+      val obj = Task.dest / s"${source.path.baseName}.o"
+      val deps = headerDeps(source.path)
+      if (!os.exists(obj) || {val mtime = os.stat(obj).mtime; deps.exists(os.stat(_).mtime > mtime)}) {
+        os.proc(CC(), "-c", CFLAGS(), "-o", obj, source.path).call()
+      }
+      PathRef(obj)
+    }
+  }
+
+  def link = Task {
+    val exe = Task.dest / executableName()
+    os.proc(CC(), "-o", exe, LDFLAGS(), compile().map(_.path)).call()
+    PathRef(exe)
+  }
+
+  def bundle = Task {
+    if (bundleName() == "") throw Exception("bundleName must be defined")
+    val bundlePath = Task.dest / s"${bundleName()}.app"
+
+    os.copy.into(link().path, bundlePath / "Contents" / "MacOS", createFolders = true)
+    for (dir <- resources()) {
+      os.copy.into(dir.path, bundlePath / "Contents" / "Resources", createFolders = true)
+    }
+
+    PathRef(bundlePath)
+  }
+
+  def run() = Task.Command {
+    os.copy.into(link().path, Task.dest)
+    for (dir <- resources()) {
+      os.copy.into(dir.path, Task.dest)
+    }
+    os.call(cmd = Task.dest / executableName())
+  }
+}
+
+object `package` extends CModule {
+  def executableName = "portal2d"
+  def bundleName = "Portal2D"
+  def pkgConfigLibs = Seq("sdl3")
+}
