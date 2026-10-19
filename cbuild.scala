@@ -9,12 +9,13 @@ import scala.sys.process.*
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 val EXE = "portal2d"
+val LIBS = Seq("sdl3", "box2d")
 
 val SOURCE_DIR = Path.of("src")
 val BUILD_DIR = Path.of("pc_build")
 
-val CFLAGS = "pkg-config --cflags sdl3".!!.strip.split(" ").toSeq
-val LDFLAGS = "pkg-config --libs sdl3".!!.strip.split(" ").toSeq
+val CFLAGS = s"pkg-config --cflags ${LIBS.mkString(" ")}".!!.strip.split(" ").toSeq
+val LDFLAGS = s"pkg-config --libs ${LIBS.mkString(" ")}".!!.strip.split(" ").toSeq
 
 def compile(sources: Set[Path], output: String) = {
   val cmd = Seq(Seq("cc", "-c"), CFLAGS, Seq("-o", output), sources.map(_.toString)).flatten(using $conforms)

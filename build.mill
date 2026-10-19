@@ -71,5 +71,5 @@ trait CModule extends Module {
 object `package` extends CModule {
   def executableName = "portal2d"
   def bundleName = "Portal2D"
-  def pkgConfigLibs = Seq("sdl3")
+  def pkgConfigLibs = Seq("sdl3", "box2d")
 }

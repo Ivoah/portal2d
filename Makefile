@@ -10,7 +10,7 @@ VITA_TITLEID := IVOAH0001
 
 EXE := portal2d
 
-LIBS := sdl3
+LIBS := sdl3 box2d
 VITA_STATIC_LIBS := $(VITASDK)/arm-vita-eabi/lib/libSDL3.a
 
 COMMON_CLFAGS += -MP -MMD
