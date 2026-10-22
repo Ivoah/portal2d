@@ -15,6 +15,10 @@ Level* Level_load(int num) {
     }
     Level* newLevel = SDL_calloc(1, sizeof(Level));
 
+    b2WorldDef worldDef = b2DefaultWorldDef();
+    worldDef.gravity = (b2Vec2){0.0f, 60.0f};
+    newLevel->worldId = b2CreateWorld(&worldDef);
+
     int x = 0, y = 0;
     for (int i = 0; mapData[i] != 0; i++) {
         if ((x >= L_MAX_WIDTH || y >= L_MAX_HEIGHT) && mapData[i] != '\n') {
@@ -25,13 +29,26 @@ Level* Level_load(int num) {
         }
         switch (mapData[i]) {
             case '#':
+            case '@':
+                ;
+                b2BodyDef wallBodyDef = b2DefaultBodyDef();
+                wallBodyDef.position = (b2Pos){x*S_SIZE + S_SIZE/2, y*S_SIZE + S_SIZE/2};
+                b2BodyId wallId = b2CreateBody(newLevel->worldId, &wallBodyDef);
+                b2Polygon wallBox = b2MakeBox(S_SIZE/2, S_SIZE/2);
+                b2ShapeDef wallShapeDef = b2DefaultShapeDef();
+                b2CreatePolygonShape(wallId, &wallShapeDef, &wallBox);
+                break;
+            default: break;
+        }
+        switch (mapData[i]) {
+            case '#':
                 newLevel->tiles[y][x] = S_PWALL;
                 break;
             case '@':
                 newLevel->tiles[y][x] = S_NPWALL;
                 break;
             case 'p':
-                newLevel->entities[newLevel->nEntities] = Entity_create(S_BENDY, (Vec2){x*S_SIZE + S_SIZE/2, y*S_SIZE + S_SIZE/2});
+                newLevel->entities[newLevel->nEntities] = Entity_create(S_BENDY, (Vec2){x*S_SIZE + S_SIZE/2, y*S_SIZE + S_SIZE/2}, newLevel->worldId);
                 newLevel->player = &newLevel->entities[newLevel->nEntities];
                 newLevel->nEntities++;
                 break;
@@ -59,6 +76,7 @@ Level* Level_load(int num) {
 }
 
 void Level_free(Level* level) {
+    b2DestroyWorld(level->worldId);
     SDL_free(level);
 }
 
@@ -69,13 +87,13 @@ SpriteId Level_getTile(Level* level, Vec2 pos) {
 
 void Level_update(Level* level, int delta) {
     const bool* key_states = SDL_GetKeyboardState(NULL);
-    Vec2 v = {0, 0};
-    if (key_states[SDL_SCANCODE_W]) v.y -= 1; 
-    if (key_states[SDL_SCANCODE_S]) v.y += 1;
-    if (key_states[SDL_SCANCODE_A]) v.x -= 1; 
-    if (key_states[SDL_SCANCODE_D]) v.x += 1;
 
-    level->player->velocity = v;
+    if (key_states[SDL_SCANCODE_W]) b2Body_ApplyLinearImpulseToCenter(level->player->bodyId, (b2Vec2){0, -10000}, true);
+    if (key_states[SDL_SCANCODE_A]) b2Body_ApplyForceToCenter(level->player->bodyId, (b2Vec2){-100000, 0}, true);
+    if (key_states[SDL_SCANCODE_D]) b2Body_ApplyForceToCenter(level->player->bodyId, (b2Vec2){ 100000, 0}, true);
+
+    float timeStep = delta/1000.0f;
+    b2World_Step(level->worldId, timeStep, 4);
 
     for (int i = 0; i < level->nEntities; i++) {
         Entity_update(&level->entities[i], level, delta);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <box2d/box2d.h>
 #include "EntityStruct.h"
 #include "Sprites.h"
 
@@ -15,6 +16,7 @@ typedef struct {
     int nEntities;
     Entity entities[L_MAX_ENTITIES];
     Entity* player;
+    b2WorldId worldId;
 } Level;
 
 Level* Level_load(int);

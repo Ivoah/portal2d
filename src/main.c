@@ -3,6 +3,7 @@
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <box2d/box2d.h>
 #include "Scene.h"
 #include "Text.h"
 #include "Util.h"
@@ -45,8 +46,10 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if (!Text_init(gamestate->renderer)) return SDL_APP_FAILURE;
     if (!Event_init()) return SDL_APP_FAILURE;
 
-    // gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
-    gamestate->scene = LevelScene_create(0);
+    b2SetLengthUnitsPerMeter(S_SIZE);
+
+    gamestate->scene = MenuScene_create(gamestate->renderer, 0, 0);
+    // gamestate->scene = LevelScene_create(0);
 
     return SDL_APP_CONTINUE;
 }
